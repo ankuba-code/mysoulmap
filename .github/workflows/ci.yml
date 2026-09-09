@@ -1,1 +1,16 @@
+name: CI
 
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Platzhalter – noch kein Build-Step definiert
+        run: echo "CI eingerichtet, Stack noch offen"
