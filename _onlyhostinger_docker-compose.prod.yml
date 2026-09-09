@@ -1,0 +1,45 @@
+services:
+  api:
+    image: ghcr.io/ankuba-code/mysoulmap-api:latest
+    restart: unless-stopped
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - BOOKING_AFFILIATE_ID=${BOOKING_AFFILIATE_ID}
+      - MYSQL_HOST=db
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - ADMIN_KEY=${ADMIN_KEY}
+    depends_on:
+      - db
+    networks:
+      - internal
+
+  db:
+    image: mysql:8
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - internal
+
+  web:
+    image: ghcr.io/ankuba-code/mysoulmap-web:latest
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+    networks:
+      - internal
+
+networks:
+  internal:
+
+volumes:
+  db_data:
