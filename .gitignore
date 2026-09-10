@@ -9,3 +9,4 @@ dist/
 *.egg-info/
 .pytest_cache/
 .mypy_cache/
+_onlyhostinger_docker-compose.prod.yml
