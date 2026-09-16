@@ -1,4 +1,52 @@
 {
-  "schemaVersion": 2,
-  "places": []
+  "places": [
+    {
+      "schemaVersion": 2,
+      "id": "mp",
+      "name": "Machu Picchu",
+      "country": "Peru",
+      "region": null,
+      "coordinates": {
+        "lat": -13.1631,
+        "lng": -72.545
+      },
+      "element": "Erde",
+      "archetyp": "Der Pilger",
+      "primaervibration": "Ehrfurcht",
+      "correspondence": "Bergnebel, Terrassen, verlorene Stadt",
+      "keywords": ["Anden", "Inka", "Höhenwanderung"]
+    },
+    {
+      "schemaVersion": 2,
+      "id": "sedona",
+      "name": "Sedona",
+      "country": "USA",
+      "region": "Arizona",
+      "coordinates": {
+        "lat": 34.8697,
+        "lng": -111.761
+      },
+      "element": "Feuer",
+      "archetyp": "Der Suchende",
+      "primaervibration": "Klarheit",
+      "correspondence": "Rote Felsen, Vortex",
+      "keywords": ["Vortex", "Wüste", "Arizona"]
+    },
+    {
+      "schemaVersion": 2,
+      "id": "uluru",
+      "name": "Uluru",
+      "country": "Australien",
+      "region": "Northern Territory",
+      "coordinates": {
+        "lat": -25.3444,
+        "lng": 131.0369
+      },
+      "element": "Erde",
+      "archetyp": "Der Hüter",
+      "primaervibration": "Stille",
+      "correspondence": "Fels, Outback, Abendrot",
+      "keywords": ["Outback", "Fels", "Traumzeit"]
+    }
+  ]
 }

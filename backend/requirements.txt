@@ -7,3 +7,4 @@ alembic==1.14.*
 geoip2==4.*
 slowapi==0.1.*
 passlib[bcrypt]==1.7.*
+openai==1.*
