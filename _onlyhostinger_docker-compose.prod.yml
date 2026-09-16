@@ -3,7 +3,7 @@ services:
     image: ghcr.io/ankuba-code/mysoulmap-api:latest
     restart: unless-stopped
     environment:
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
       - BOOKING_AFFILIATE_ID=${BOOKING_AFFILIATE_ID}
       - MYSQL_HOST=db
       - MYSQL_USER=${MYSQL_USER}

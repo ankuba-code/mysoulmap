@@ -21,11 +21,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - uses: docker/setup-buildx-action@v3
+
       - name: API-Image bauen und pushen
         uses: docker/build-push-action@v6
         with:
           context: ./backend
           push: true
+          platforms: linux/amd64
           tags: ghcr.io/${{ github.repository }}-api:latest
 
       - name: Web-Image bauen und pushen
@@ -33,6 +36,7 @@ jobs:
         with:
           context: ./frontend
           push: true
+          platforms: linux/amd64
           tags: ghcr.io/${{ github.repository }}-web:latest
 
   deploy:

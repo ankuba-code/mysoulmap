@@ -1,0 +1,10 @@
+[tool.ruff]
+target-version = "py312"
+src = ["src"]
+
+[tool.mypy]
+python_version = "3.12"
+mypy_path = "src"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

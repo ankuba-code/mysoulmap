@@ -1,0 +1,34 @@
+services:
+  api:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      MYSQL_HOST: db
+      MYSQL_USER: ${MYSQL_USER:-soulmap}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-soulmap_dev}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-soulmap}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: mysql:8
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-soulmap_root_dev}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-soulmap}
+      MYSQL_USER: ${MYSQL_USER:-soulmap}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-soulmap_dev}
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    volumes:
+      - db_data:/var/lib/mysql
+
+volumes:
+  db_data:
