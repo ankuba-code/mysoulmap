@@ -1,0 +1,32 @@
+schema: spec-driven
+
+context: |
+  Language: de
+  All artifacts must be written in de.
+  Keep OpenSpec structural headings and SHALL/MUST keywords in English.
+  Project: Soulmap, anonyme Web-App für Kurzreise-Empfehlungen aus einem kuratierten Atlas von 40 Orten.
+  Stack: FastAPI, places.json, OpenAI gpt-5-mini, MySQL nur für usage_events, React 18, Vite, Tailwind CSS.
+  No end-user accounts. Chat is stateless. Recommendations stay inside the atlas.
+  Source document: docs/soulmap-softwarespezifikation.md
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always state what is out of scope
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
+
+# Per-operation guidance (optional)
+# Add advisory guidance for how apply and archive work should be conducted.
+# This is separate from artifact rules above.
+# Example:
+#   operations:
+#     apply:
+#       guidance:
+#         - Keep test summaries concise
+#     archive:
+#       guidance:
+#         - Summarize the archive outcome before finishing
