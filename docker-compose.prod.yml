@@ -10,6 +10,11 @@ services:
       - MYSQL_PASSWORD=${MYSQL_PASSWORD}
       - MYSQL_DATABASE=${MYSQL_DATABASE}
       - ADMIN_KEY=${ADMIN_KEY}
+      - ADMIN_PASSWORD_HASH=${ADMIN_PASSWORD_HASH}
+      - ADMIN_SESSION_SECRET=${ADMIN_SESSION_SECRET:-}
+      - CORS_ORIGIN=${CORS_ORIGIN:-https://app.mithertz.online}
+      - FORWARDED_ALLOW_IPS=${FORWARDED_ALLOW_IPS:-*}
+      - GEOIP_DB_PATH=${GEOIP_DB_PATH:-}
     depends_on:
       - db
     networks:

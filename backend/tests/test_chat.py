@@ -8,7 +8,7 @@ from src.models_chat import ChatRequest, LlmOutput
 
 
 def _request(
-    text: str = "Ich suche einen Ort in den Anden",
+    text: str = "Ich suche einen Ort mit height mountain",
     shown: list[str] | None = None,
     language: str = "de",
 ) -> ChatRequest:
@@ -20,21 +20,21 @@ def _request(
 
 
 def test_tokenize_and_score() -> None:
-    tokens = tokenize("Anden, Inka!")
-    assert "anden" in tokens
-    assert "inka" in tokens
+    tokens = tokenize("height, mountain!")
+    assert "height" in tokens
+    assert "mountain" in tokens
     mp = next(place for place in PLACES if place.id == "mp")
     assert score_place(mp, tokens) >= 2
 
 
 def test_fallback_keyword_prefers_matching_place() -> None:
-    ids = fallback_place_ids(_request("Anden Inka Höhenwanderung"), PLACES)
+    ids = fallback_place_ids(_request("height mountain"), PLACES)
     assert ids == ["mp"]
 
 
 def test_fallback_excludes_shown_place_ids() -> None:
     ids = fallback_place_ids(
-        _request("Anden Inka", shown=["mp"]),
+        _request("height mountain", shown=["mp"]),
         PLACES,
     )
     assert "mp" not in ids
@@ -79,12 +79,12 @@ def test_scope_violation_then_valid_retry() -> None:
         calls.append("STRICT" in system_prompt)
         if "STRICT" not in system_prompt:
             return LlmOutput(message="Paris ist schön.", place_ids=["paris"])
-        return LlmOutput(message="Dann Sedona.", place_ids=["sedona"])
+        return LlmOutput(message="Dann Uluru.", place_ids=["ul"])
 
     response = asyncio.run(handle_chat(_request(), PLACES, complete=fake_llm))
     assert calls == [False, True]
     assert response.source == "llm"
-    assert [place.id for place in response.recommended_places] == ["sedona"]
+    assert [place.id for place in response.recommended_places] == ["ul"]
 
 
 def test_scope_violation_falls_back_after_retry() -> None:
@@ -101,7 +101,7 @@ def test_timeout_uses_fallback() -> None:
     async def fake_llm(**_kwargs: object) -> LlmOutput:
         raise LlmCallError("OPENAI_TIMEOUT")
 
-    response = asyncio.run(handle_chat(_request("Anden Inka"), PLACES, complete=fake_llm))
+    response = asyncio.run(handle_chat(_request("height mountain"), PLACES, complete=fake_llm))
     assert response.source == "fallback"
     assert "nicht erreichbar" in response.message.content
     assert [place.id for place in response.recommended_places][0] == "mp"

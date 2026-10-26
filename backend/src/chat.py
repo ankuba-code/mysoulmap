@@ -1,14 +1,25 @@
+import time
 from collections.abc import Awaitable, Callable
+from dataclasses import dataclass
 from typing import Literal
 
 from .atlas import Place
 from .fallback import fallback_message, fallback_place_ids
-from .llm import LlmCallError, complete_llm
+from .llm import LlmCallError, complete_llm, pop_llm_usage
 from .models_chat import ChatMessage, ChatRequest, ChatResponse, LlmOutput, RecommendedPlace
 from .prompts import build_system_prompt
 
 LlmComplete = Callable[..., Awaitable[LlmOutput]]
 ChatSource = Literal["llm", "fallback"]
+
+
+@dataclass
+class ChatTrace:
+    source: ChatSource
+    error_code: str | None = None
+    latency_ms: int | None = None
+    input_tokens: int | None = None
+    output_tokens: int | None = None
 
 
 def unique_preserve(values: list[str]) -> list[str]:
@@ -47,6 +58,13 @@ def build_chat_response(
             id=place_id,
             name=by_id[place_id].name,
             booking_link=f"/go/{place_id}",
+            country=by_id[place_id].country,
+            coordinates={
+                "lat": by_id[place_id].coordinates.lat,
+                "lng": by_id[place_id].coordinates.lng,
+            },
+            primaervibration=by_id[place_id].primaervibration,
+            correspondence=by_id[place_id].correspondence,
         )
         for place_id in new_ids
     ]
@@ -83,6 +101,8 @@ async def _llm_turn(
         places,
         language=request.language,
         shown_place_ids=request.shown_place_ids,
+        ritual_context=request.ritual_context,
+        from_ritual=request.from_ritual,
         strict=strict,
     )
     try:
@@ -96,27 +116,57 @@ async def _llm_turn(
     return output
 
 
+async def run_chat(
+    request: ChatRequest,
+    places: list[Place],
+    *,
+    complete: LlmComplete | None = None,
+) -> tuple[ChatResponse, ChatTrace]:
+    llm = complete if complete is not None else complete_llm
+    started = time.perf_counter()
+    error_code: str | None = None
+    try:
+        output = await _llm_turn(llm, request, places, strict=False)
+        if output is None:
+            output = await _llm_turn(llm, request, places, strict=True)
+            if output is None:
+                error_code = "LLM_RESPONSE_INVALID"
+    except LlmCallError as exc:
+        error_code = exc.code
+        output = None
+
+    latency_ms = int((time.perf_counter() - started) * 1000)
+    usage = pop_llm_usage()
+
+    if output is None:
+        return fallback_response(request, places), ChatTrace(
+            source="fallback",
+            error_code=error_code,
+            latency_ms=latency_ms,
+        )
+
+    return (
+        build_chat_response(
+            content=output.message,
+            place_ids=output.place_ids,
+            shown_place_ids=request.shown_place_ids,
+            places=places,
+            source="llm",
+        ),
+        ChatTrace(
+            source="llm",
+            latency_ms=latency_ms,
+            input_tokens=usage.get("input_tokens"),
+            output_tokens=usage.get("output_tokens"),
+        ),
+    )
+
+
 async def handle_chat(
     request: ChatRequest,
     places: list[Place],
     *,
     complete: LlmComplete | None = None,
 ) -> ChatResponse:
-    llm = complete if complete is not None else complete_llm
-    try:
-        output = await _llm_turn(llm, request, places, strict=False)
-        if output is None:
-            output = await _llm_turn(llm, request, places, strict=True)
-    except LlmCallError:
-        return fallback_response(request, places)
-
-    if output is None:
-        return fallback_response(request, places)
-
-    return build_chat_response(
-        content=output.message,
-        place_ids=output.place_ids,
-        shown_place_ids=request.shown_place_ids,
-        places=places,
-        source="llm",
-    )
+    response, _ = await run_chat(request, places, complete=complete)
+    return response

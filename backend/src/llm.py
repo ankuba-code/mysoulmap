@@ -1,5 +1,6 @@
 import asyncio
 import os
+from contextvars import ContextVar
 
 from openai import (
     APIConnectionError,
@@ -15,6 +16,13 @@ from .prompts import to_openai_messages
 MODEL = "gpt-5-mini"
 TIMEOUT_SECONDS = 20.0
 RETRY_BACKOFF_SECONDS = 0.5
+_llm_usage: ContextVar[dict[str, int | None]] = ContextVar("llm_usage", default={})
+
+
+def pop_llm_usage() -> dict[str, int | None]:
+    usage = dict(_llm_usage.get())
+    _llm_usage.set({})
+    return usage
 
 
 class LlmCallError(Exception):
@@ -85,4 +93,12 @@ async def _parse_once(payload: list[dict[str, str]]) -> LlmOutput:
     parsed = completion.choices[0].message.parsed
     if parsed is None:
         raise LlmCallError("LLM_RESPONSE_INVALID")
+    usage = getattr(completion, "usage", None)
+    if usage is not None:
+        _llm_usage.set(
+            {
+                "input_tokens": getattr(usage, "prompt_tokens", None),
+                "output_tokens": getattr(usage, "completion_tokens", None),
+            }
+        )
     return LlmOutput.model_validate(parsed)

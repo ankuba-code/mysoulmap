@@ -16,6 +16,8 @@ VALID_PLACE = {
     "element": "Erde",
     "archetyp": "Der Pilger",
     "primaervibration": "Ehrfurcht",
+    "secondaryFrequencies": [],
+    "intensity": 6,
     "correspondence": "Bergnebel, Terrassen, verlorene Stadt",
     "keywords": ["Anden", "Inka", "Höhenwanderung"],
 }

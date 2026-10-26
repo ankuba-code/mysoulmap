@@ -10,7 +10,7 @@ def test_list_places_returns_schema_v2() -> None:
     assert response.status_code == 200
     body = response.json()
     assert "places" in body
-    assert len(body["places"]) >= 1
+    assert len(body["places"]) == 40
     place = body["places"][0]
     for field in (
         "schemaVersion",
@@ -21,6 +21,8 @@ def test_list_places_returns_schema_v2() -> None:
         "element",
         "archetyp",
         "primaervibration",
+        "secondaryFrequencies",
+        "intensity",
         "correspondence",
         "keywords",
     ):
@@ -31,11 +33,11 @@ def test_list_places_returns_schema_v2() -> None:
 
 
 def test_list_places_filters() -> None:
-    by_element = client.get("/atlas/places", params={"element": "Erde"})
+    by_element = client.get("/atlas/places", params={"element": "earth"})
     assert by_element.status_code == 200
-    assert {place["element"] for place in by_element.json()["places"]} == {"Erde"}
+    assert {place["element"] for place in by_element.json()["places"]} == {"earth"}
 
-    by_keyword = client.get("/atlas/places", params={"keyword": "Inka"})
+    by_keyword = client.get("/atlas/places", params={"keyword": "height"})
     assert by_keyword.status_code == 200
     ids = [place["id"] for place in by_keyword.json()["places"]]
     assert ids == ["mp"]
@@ -61,4 +63,4 @@ def test_health_reports_loaded_places() -> None:
     assert response.status_code == 200
     body = response.json()
     assert body["status"] == "ok"
-    assert body["places_loaded"] >= 1
+    assert body["places_loaded"] == 40

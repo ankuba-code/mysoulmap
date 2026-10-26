@@ -10,43 +10,980 @@
         "lat": -13.1631,
         "lng": -72.545
       },
-      "element": "Erde",
-      "archetyp": "Der Pilger",
-      "primaervibration": "Ehrfurcht",
-      "correspondence": "Bergnebel, Terrassen, verlorene Stadt",
-      "keywords": ["Anden", "Inka", "Höhenwanderung"]
+      "element": "earth",
+      "archetyp": "Guardian",
+      "primaervibration": "Sacred Mountain",
+      "correspondence": "Sacred Mountain · Guardian · Height / Memory",
+      "keywords": [
+        "earth",
+        "sacred",
+        "mountain",
+        "guardian",
+        "height",
+        "memory"
+      ],
+      "secondaryFrequencies": [],
+      "intensity": 6
     },
     {
       "schemaVersion": 2,
-      "id": "sedona",
-      "name": "Sedona",
-      "country": "USA",
-      "region": "Arizona",
-      "coordinates": {
-        "lat": 34.8697,
-        "lng": -111.761
-      },
-      "element": "Feuer",
-      "archetyp": "Der Suchende",
-      "primaervibration": "Klarheit",
-      "correspondence": "Rote Felsen, Vortex",
-      "keywords": ["Vortex", "Wüste", "Arizona"]
-    },
-    {
-      "schemaVersion": 2,
-      "id": "uluru",
+      "id": "ul",
       "name": "Uluru",
-      "country": "Australien",
-      "region": "Northern Territory",
+      "country": "Australia",
+      "region": null,
       "coordinates": {
         "lat": -25.3444,
         "lng": 131.0369
       },
-      "element": "Erde",
-      "archetyp": "Der Hüter",
-      "primaervibration": "Stille",
-      "correspondence": "Fels, Outback, Abendrot",
-      "keywords": ["Outback", "Fels", "Traumzeit"]
+      "element": "earth",
+      "archetyp": "Ancestor",
+      "primaervibration": "Primordial Rock",
+      "correspondence": "Primordial Rock · Ancestor · Origin / Center",
+      "keywords": [
+        "earth",
+        "primordial",
+        "rock",
+        "ancestor",
+        "origin",
+        "center"
+      ],
+      "secondaryFrequencies": [],
+      "intensity": 6
+    },
+    {
+      "schemaVersion": 2,
+      "id": "pt",
+      "name": "Petra",
+      "country": "Jordan",
+      "region": null,
+      "coordinates": {
+        "lat": 30.3285,
+        "lng": 35.4444
+      },
+      "element": "earth",
+      "archetyp": "Desert Architect",
+      "primaervibration": "Carved City",
+      "correspondence": "Carved City · Desert Architect · Stone / History",
+      "keywords": [
+        "earth",
+        "carved",
+        "city",
+        "desert",
+        "architect",
+        "stone",
+        "history"
+      ],
+      "secondaryFrequencies": [],
+      "intensity": 6
+    },
+    {
+      "schemaVersion": 2,
+      "id": "bf",
+      "name": "Banff",
+      "country": "Canada",
+      "region": null,
+      "coordinates": {
+        "lat": 51.1784,
+        "lng": -115.5708
+      },
+      "element": "earth",
+      "archetyp": "Northern Guardian",
+      "primaervibration": "Glacial Purity",
+      "correspondence": "Glacial Purity · Northern Guardian · Ice / Clarity",
+      "keywords": [
+        "earth",
+        "glacial",
+        "purity",
+        "northern",
+        "guardian",
+        "ice",
+        "clarity"
+      ],
+      "secondaryFrequencies": [],
+      "intensity": 6
+    },
+    {
+      "schemaVersion": 2,
+      "id": "vr",
+      "name": "Varanasi",
+      "country": "India",
+      "region": null,
+      "coordinates": {
+        "lat": 25.3176,
+        "lng": 82.9739
+      },
+      "element": "water",
+      "archetyp": "Threshold",
+      "primaervibration": "Passage",
+      "correspondence": "Passage · Threshold · Life / Death",
+      "keywords": [
+        "water",
+        "passage",
+        "threshold",
+        "life",
+        "death"
+      ],
+      "secondaryFrequencies": [],
+      "intensity": 6
+    },
+    {
+      "schemaVersion": 2,
+      "id": "gn",
+      "name": "Ganges River",
+      "country": "India",
+      "region": null,
+      "coordinates": {
+        "lat": 25.4358,
+        "lng": 81.8463
+      },
+      "element": "water",
+      "archetyp": "Mother",
+      "primaervibration": "Sacred Water",
+      "correspondence": "Sacred Water · Mother · Purification",
+      "keywords": [
+        "water",
+        "sacred",
+        "mother",
+        "purification"
+      ],
+      "secondaryFrequencies": [],
+      "intensity": 6
+    },
+    {
+      "schemaVersion": 2,
+      "id": "msm",
+      "name": "Mont Saint-Michel",
+      "country": "France",
+      "region": null,
+      "coordinates": {
+        "lat": 48.6361,
+        "lng": -1.5115
+      },
+      "element": "water",
+      "archetyp": "Monk",
+      "primaervibration": "Rising Water",
+      "correspondence": "Rising Water · Monk · Tide / Ascent",
+      "keywords": [
+        "water",
+        "rising",
+        "monk",
+        "tide",
+        "ascent"
+      ],
+      "secondaryFrequencies": [],
+      "intensity": 6
+    },
+    {
+      "schemaVersion": 2,
+      "id": "su",
+      "name": "Salar de Uyuni",
+      "country": "Bolivia",
+      "region": null,
+      "coordinates": {
+        "lat": -20.1338,
+        "lng": -67.4891
+      },
+      "element": "water",
+      "archetyp": "Reflection",
+      "primaervibration": "Sky Mirror",
+      "correspondence": "Sky Mirror · Reflection · Sky / Earth",
+      "keywords": [
+        "water",
+        "sky",
+        "mirror",
+        "reflection",
+        "earth"
+      ],
+      "secondaryFrequencies": [],
+      "intensity": 6
+    },
+    {
+      "schemaVersion": 2,
+      "id": "rk",
+      "name": "Reykjavik",
+      "country": "Iceland",
+      "region": null,
+      "coordinates": {
+        "lat": 64.1466,
+        "lng": -21.9426
+      },
+      "element": "fire",
+      "archetyp": "Alchemist",
+      "primaervibration": "Fire and Ice",
+      "correspondence": "Fire and Ice · Alchemist · Contrast / Transformation",
+      "keywords": [
+        "fire",
+        "ice",
+        "alchemist",
+        "contrast",
+        "transformation"
+      ],
+      "secondaryFrequencies": [],
+      "intensity": 6
+    },
+    {
+      "schemaVersion": 2,
+      "id": "sg",
+      "name": "Serengeti",
+      "country": "Tanzania",
+      "region": null,
+      "coordinates": {
+        "lat": -2.3333,
+        "lng": 34.8333
+      },
+      "element": "fire",
+      "archetyp": "Sacred Animal",
+      "primaervibration": "Cyclic Pulse",
+      "correspondence": "Cyclic Pulse · Sacred Animal · Rhythm / Life",
+      "keywords": [
+        "fire",
+        "cyclic",
+        "pulse",
+        "sacred",
+        "animal",
+        "rhythm",
+        "life"
+      ],
+      "secondaryFrequencies": [],
+      "intensity": 6
+    },
+    {
+      "schemaVersion": 2,
+      "id": "mf",
+      "name": "Mount Fuji",
+      "country": "Japan",
+      "region": null,
+      "coordinates": {
+        "lat": 35.3606,
+        "lng": 138.7274
+      },
+      "element": "fire",
+      "archetyp": "Reborn One",
+      "primaervibration": "Purity",
+      "correspondence": "Purity · Reborn One · Form / Renewal",
+      "keywords": [
+        "fire",
+        "purity",
+        "reborn",
+        "one",
+        "form",
+        "renewal"
+      ],
+      "secondaryFrequencies": [],
+      "intensity": 6
+    },
+    {
+      "schemaVersion": 2,
+      "id": "tk",
+      "name": "Tikal",
+      "country": "Guatemala",
+      "region": null,
+      "coordinates": {
+        "lat": 17.222,
+        "lng": -89.6237
+      },
+      "element": "fire",
+      "archetyp": "Chronicler",
+      "primaervibration": "Deep Time",
+      "correspondence": "Deep Time · Chronicler · Jungle / Time",
+      "keywords": [
+        "fire",
+        "deep",
+        "time",
+        "chronicler",
+        "jungle"
+      ],
+      "secondaryFrequencies": [],
+      "intensity": 6
+    },
+    {
+      "schemaVersion": 2,
+      "id": "sm",
+      "name": "Samarkand",
+      "country": "Uzbekistan",
+      "region": null,
+      "coordinates": {
+        "lat": 39.627,
+        "lng": 66.9749
+      },
+      "element": "air",
+      "archetyp": "Weaver",
+      "primaervibration": "Crossroads",
+      "correspondence": "Crossroads · Weaver · Routes / Stories",
+      "keywords": [
+        "air",
+        "crossroads",
+        "weaver",
+        "routes",
+        "stories"
+      ],
+      "secondaryFrequencies": [],
+      "intensity": 6
+    },
+    {
+      "schemaVersion": 2,
+      "id": "es",
+      "name": "Istanbul",
+      "country": "Turkey",
+      "region": null,
+      "coordinates": {
+        "lat": 41.0082,
+        "lng": 28.9784
+      },
+      "element": "air",
+      "archetyp": "Mediator",
+      "primaervibration": "Bridge of Worlds",
+      "correspondence": "Bridge of Worlds · Mediator · East / West",
+      "keywords": [
+        "air",
+        "bridge",
+        "worlds",
+        "mediator",
+        "east",
+        "west"
+      ],
+      "secondaryFrequencies": [],
+      "intensity": 6
+    },
+    {
+      "schemaVersion": 2,
+      "id": "fz",
+      "name": "Fez",
+      "country": "Morocco",
+      "region": null,
+      "coordinates": {
+        "lat": 34.0331,
+        "lng": -5.0003
+      },
+      "element": "air",
+      "archetyp": "Artisan",
+      "primaervibration": "Living Labyrinth",
+      "correspondence": "Living Labyrinth · Artisan · Alleys / Crafts",
+      "keywords": [
+        "air",
+        "living",
+        "labyrinth",
+        "artisan",
+        "alleys",
+        "crafts"
+      ],
+      "secondaryFrequencies": [],
+      "intensity": 6
+    },
+    {
+      "schemaVersion": 2,
+      "id": "ky",
+      "name": "Kyoto",
+      "country": "Japan",
+      "region": null,
+      "coordinates": {
+        "lat": 35.0116,
+        "lng": 135.7681
+      },
+      "element": "air",
+      "archetyp": "Custodian",
+      "primaervibration": "Living Temple",
+      "correspondence": "Living Temple · Custodian · Tradition / Silence",
+      "keywords": [
+        "air",
+        "living",
+        "temple",
+        "custodian",
+        "tradition",
+        "silence"
+      ],
+      "secondaryFrequencies": [],
+      "intensity": 6
+    },
+    {
+      "schemaVersion": 2,
+      "id": "mk",
+      "name": "Mount Kailash",
+      "country": "Tibet",
+      "region": null,
+      "coordinates": {
+        "lat": 31.0675,
+        "lng": 81.3119
+      },
+      "element": "aether",
+      "archetyp": "Pilgrim",
+      "primaervibration": "Axis of the World",
+      "correspondence": "Axis of the World · Pilgrim · Center / Sacred",
+      "keywords": [
+        "ether",
+        "axis",
+        "world",
+        "pilgrim",
+        "center",
+        "sacred"
+      ],
+      "secondaryFrequencies": [],
+      "intensity": 6
+    },
+    {
+      "schemaVersion": 2,
+      "id": "rn",
+      "name": "Rapa Nui",
+      "country": "Chile",
+      "region": null,
+      "coordinates": {
+        "lat": -27.1127,
+        "lng": -109.3497
+      },
+      "element": "aether",
+      "archetyp": "Witness",
+      "primaervibration": "Ancestral Memory",
+      "correspondence": "Ancestral Memory · Witness · Ancestors / Stone",
+      "keywords": [
+        "ether",
+        "ancestral",
+        "memory",
+        "witness",
+        "ancestors",
+        "stone"
+      ],
+      "secondaryFrequencies": [],
+      "intensity": 6
+    },
+    {
+      "schemaVersion": 2,
+      "id": "aw",
+      "name": "Angkor Wat",
+      "country": "Cambodia",
+      "region": null,
+      "coordinates": {
+        "lat": 13.4125,
+        "lng": 103.867
+      },
+      "element": "aether",
+      "archetyp": "Builder",
+      "primaervibration": "Sacred Geometry",
+      "correspondence": "Sacred Geometry · Builder · Light / Stone",
+      "keywords": [
+        "ether",
+        "sacred",
+        "geometry",
+        "builder",
+        "light",
+        "stone"
+      ],
+      "secondaryFrequencies": [],
+      "intensity": 6
+    },
+    {
+      "schemaVersion": 2,
+      "id": "us",
+      "name": "Ushuaia",
+      "country": "Argentina",
+      "region": null,
+      "coordinates": {
+        "lat": -54.8019,
+        "lng": -68.303
+      },
+      "element": "aether",
+      "archetyp": "Explorer",
+      "primaervibration": "End of the World",
+      "correspondence": "End of the World · Explorer · Edge / Unknown",
+      "keywords": [
+        "ether",
+        "end",
+        "world",
+        "explorer",
+        "edge",
+        "unknown"
+      ],
+      "secondaryFrequencies": [],
+      "intensity": 6
+    },
+    {
+      "schemaVersion": 2,
+      "id": "gp",
+      "name": "Giza Plateau",
+      "country": "Egypt",
+      "region": null,
+      "coordinates": {
+        "lat": 29.9792,
+        "lng": 31.1342
+      },
+      "element": "earth",
+      "archetyp": "Geometer",
+      "primaervibration": "Axis of Knowledge",
+      "correspondence": "Axis of Knowledge · Geometer · Axis / Knowledge",
+      "keywords": [
+        "earth",
+        "axis",
+        "knowledge",
+        "geometer"
+      ],
+      "secondaryFrequencies": [],
+      "intensity": 6
+    },
+    {
+      "schemaVersion": 2,
+      "id": "st",
+      "name": "Stonehenge",
+      "country": "UK",
+      "region": null,
+      "coordinates": {
+        "lat": 51.1789,
+        "lng": -1.8262
+      },
+      "element": "earth",
+      "archetyp": "Timekeeper",
+      "primaervibration": "Megalithic Resonance",
+      "correspondence": "Megalithic Resonance · Timekeeper · Stone / Time",
+      "keywords": [
+        "earth",
+        "megalithic",
+        "resonance",
+        "timekeeper",
+        "stone",
+        "time"
+      ],
+      "secondaryFrequencies": [],
+      "intensity": 6
+    },
+    {
+      "schemaVersion": 2,
+      "id": "ti",
+      "name": "Tiwanaku",
+      "country": "Bolivia",
+      "region": null,
+      "coordinates": {
+        "lat": -16.5542,
+        "lng": -68.673
+      },
+      "element": "earth",
+      "archetyp": "Architect of Dawn",
+      "primaervibration": "Solar Gate",
+      "correspondence": "Solar Gate · Architect of Dawn · Sun / Origin",
+      "keywords": [
+        "earth",
+        "solar",
+        "gate",
+        "architect",
+        "dawn",
+        "sun",
+        "origin"
+      ],
+      "secondaryFrequencies": [],
+      "intensity": 6
+    },
+    {
+      "schemaVersion": 2,
+      "id": "sgn",
+      "name": "Sigiriya",
+      "country": "Sri Lanka",
+      "region": null,
+      "coordinates": {
+        "lat": 7.957,
+        "lng": 80.7603
+      },
+      "element": "earth",
+      "archetyp": "Guardian King",
+      "primaervibration": "Lion Rock",
+      "correspondence": "Lion Rock · Guardian King · Rock / Sovereignty",
+      "keywords": [
+        "earth",
+        "lion",
+        "rock",
+        "guardian",
+        "king",
+        "sovereignty"
+      ],
+      "secondaryFrequencies": [],
+      "intensity": 6
+    },
+    {
+      "schemaVersion": 2,
+      "id": "bm",
+      "name": "Bermuda Triangle Vertex",
+      "country": "Atlantic",
+      "region": null,
+      "coordinates": {
+        "lat": 25.0,
+        "lng": -71.0
+      },
+      "element": "water",
+      "archetyp": "Navigator",
+      "primaervibration": "Magnetic Anomaly",
+      "correspondence": "Magnetic Anomaly · Navigator · Sea / Mystery",
+      "keywords": [
+        "water",
+        "magnetic",
+        "anomaly",
+        "navigator",
+        "sea",
+        "mystery"
+      ],
+      "secondaryFrequencies": [],
+      "intensity": 6
+    },
+    {
+      "schemaVersion": 2,
+      "id": "ls",
+      "name": "Lake Superior",
+      "country": "USA/Canada",
+      "region": null,
+      "coordinates": {
+        "lat": 47.7,
+        "lng": -87.4
+      },
+      "element": "water",
+      "archetyp": "Ancient Waters",
+      "primaervibration": "Deep Memory Field",
+      "correspondence": "Deep Memory Field · Ancient Waters · Depth / Clarity",
+      "keywords": [
+        "water",
+        "deep",
+        "memory",
+        "field",
+        "ancient",
+        "waters",
+        "depth",
+        "clarity"
+      ],
+      "secondaryFrequencies": [],
+      "intensity": 6
+    },
+    {
+      "schemaVersion": 2,
+      "id": "cr",
+      "name": "Cape Reinga",
+      "country": "New Zealand",
+      "region": null,
+      "coordinates": {
+        "lat": -34.426,
+        "lng": 172.68
+      },
+      "element": "water",
+      "archetyp": "Soul Guide",
+      "primaervibration": "Meeting of Oceans",
+      "correspondence": "Meeting of Oceans · Soul Guide · Ocean / Passage",
+      "keywords": [
+        "water",
+        "meeting",
+        "oceans",
+        "soul",
+        "guide",
+        "ocean",
+        "passage"
+      ],
+      "secondaryFrequencies": [],
+      "intensity": 6
+    },
+    {
+      "schemaVersion": 2,
+      "id": "az",
+      "name": "Azores Archipelago",
+      "country": "Portugal",
+      "region": null,
+      "coordinates": {
+        "lat": 38.721,
+        "lng": -27.22
+      },
+      "element": "water",
+      "archetyp": "Lost Navigator",
+      "primaervibration": "Atlantean Echo",
+      "correspondence": "Atlantean Echo · Lost Navigator · Island / Echo",
+      "keywords": [
+        "water",
+        "atlantean",
+        "echo",
+        "lost",
+        "navigator",
+        "island"
+      ],
+      "secondaryFrequencies": [],
+      "intensity": 6
+    },
+    {
+      "schemaVersion": 2,
+      "id": "sh",
+      "name": "Mount Shasta",
+      "country": "USA",
+      "region": null,
+      "coordinates": {
+        "lat": 41.4091,
+        "lng": -122.1946
+      },
+      "element": "fire",
+      "archetyp": "Guardian of Origins",
+      "primaervibration": "Root Fire",
+      "correspondence": "Root Fire · Guardian of Origins · Origin / Fire",
+      "keywords": [
+        "fire",
+        "root",
+        "guardian",
+        "origins",
+        "origin"
+      ],
+      "secondaryFrequencies": [],
+      "intensity": 6
+    },
+    {
+      "schemaVersion": 2,
+      "id": "kr",
+      "name": "Krakatoa",
+      "country": "Indonesia",
+      "region": null,
+      "coordinates": {
+        "lat": -6.102,
+        "lng": 105.423
+      },
+      "element": "fire",
+      "archetyp": "Destroyer–Creator",
+      "primaervibration": "Primordial Eruption",
+      "correspondence": "Primordial Eruption · Destroyer–Creator · Fire / Creation",
+      "keywords": [
+        "fire",
+        "primordial",
+        "eruption",
+        "destroyer",
+        "creator",
+        "creation"
+      ],
+      "secondaryFrequencies": [],
+      "intensity": 6
+    },
+    {
+      "schemaVersion": 2,
+      "id": "et",
+      "name": "Mount Etna",
+      "country": "Italy",
+      "region": null,
+      "coordinates": {
+        "lat": 37.751,
+        "lng": 14.9934
+      },
+      "element": "fire",
+      "archetyp": "Alchemist",
+      "primaervibration": "Fire of Renewal",
+      "correspondence": "Fire of Renewal · Alchemist · Lava / Renewal",
+      "keywords": [
+        "fire",
+        "renewal",
+        "alchemist",
+        "lava"
+      ],
+      "secondaryFrequencies": [],
+      "intensity": 6
+    },
+    {
+      "schemaVersion": 2,
+      "id": "ma",
+      "name": "Mauna Kea",
+      "country": "Hawaii",
+      "region": null,
+      "coordinates": {
+        "lat": 19.8207,
+        "lng": -155.4681
+      },
+      "element": "fire",
+      "archetyp": "Star Priest",
+      "primaervibration": "Sky Volcano",
+      "correspondence": "Sky Volcano · Star Priest · Sky / Fire",
+      "keywords": [
+        "fire",
+        "sky",
+        "volcano",
+        "star",
+        "priest"
+      ],
+      "secondaryFrequencies": [],
+      "intensity": 6
+    },
+    {
+      "schemaVersion": 2,
+      "id": "gl",
+      "name": "Glastonbury Tor",
+      "country": "UK",
+      "region": null,
+      "coordinates": {
+        "lat": 51.145,
+        "lng": -2.714
+      },
+      "element": "air",
+      "archetyp": "Weaver",
+      "primaervibration": "Heart of Avalon",
+      "correspondence": "Heart of Avalon · Weaver · Heart / Mist",
+      "keywords": [
+        "air",
+        "heart",
+        "avalon",
+        "weaver",
+        "mist"
+      ],
+      "secondaryFrequencies": [],
+      "intensity": 6
+    },
+    {
+      "schemaVersion": 2,
+      "id": "jn",
+      "name": "Jerusalem",
+      "country": "Israel",
+      "region": null,
+      "coordinates": {
+        "lat": 31.7683,
+        "lng": 35.2137
+      },
+      "element": "air",
+      "archetyp": "Mediator",
+      "primaervibration": "Axis of Faith",
+      "correspondence": "Axis of Faith · Mediator · Faith / Axis",
+      "keywords": [
+        "air",
+        "axis",
+        "faith",
+        "mediator"
+      ],
+      "secondaryFrequencies": [],
+      "intensity": 6
+    },
+    {
+      "schemaVersion": 2,
+      "id": "ax",
+      "name": "Axum",
+      "country": "Ethiopia",
+      "region": null,
+      "coordinates": {
+        "lat": 14.1211,
+        "lng": 38.724
+      },
+      "element": "air",
+      "archetyp": "Chronicler",
+      "primaervibration": "Ark Resonance",
+      "correspondence": "Ark Resonance · Chronicler · Ark / Memory",
+      "keywords": [
+        "air",
+        "ark",
+        "resonance",
+        "chronicler",
+        "memory"
+      ],
+      "secondaryFrequencies": [],
+      "intensity": 6
+    },
+    {
+      "schemaVersion": 2,
+      "id": "ch",
+      "name": "Chichén Itzá",
+      "country": "Mexico",
+      "region": null,
+      "coordinates": {
+        "lat": 20.6843,
+        "lng": -88.5678
+      },
+      "element": "air",
+      "archetyp": "Messenger",
+      "primaervibration": "Feathered Wind",
+      "correspondence": "Feathered Wind · Messenger · Wind / Knowledge",
+      "keywords": [
+        "air",
+        "feathered",
+        "wind",
+        "messenger",
+        "knowledge"
+      ],
+      "secondaryFrequencies": [],
+      "intensity": 6
+    },
+    {
+      "schemaVersion": 2,
+      "id": "shl",
+      "name": "Shambhala Node",
+      "country": "Altai Mountains",
+      "region": null,
+      "coordinates": {
+        "lat": 49.0,
+        "lng": 89.0
+      },
+      "element": "aether",
+      "archetyp": "Pilgrim of Light",
+      "primaervibration": "Hidden Kingdom",
+      "correspondence": "Hidden Kingdom · Pilgrim of Light · Hidden / Light",
+      "keywords": [
+        "ether",
+        "hidden",
+        "kingdom",
+        "pilgrim",
+        "light"
+      ],
+      "secondaryFrequencies": [],
+      "intensity": 6
+    },
+    {
+      "schemaVersion": 2,
+      "id": "dl",
+      "name": "Delphi",
+      "country": "Greece",
+      "region": null,
+      "coordinates": {
+        "lat": 38.4828,
+        "lng": 22.501
+      },
+      "element": "aether",
+      "archetyp": "Oracle",
+      "primaervibration": "Navel of the World",
+      "correspondence": "Navel of the World · Oracle · Center / Oracle",
+      "keywords": [
+        "ether",
+        "navel",
+        "world",
+        "oracle",
+        "center"
+      ],
+      "secondaryFrequencies": [],
+      "intensity": 6
+    },
+    {
+      "schemaVersion": 2,
+      "id": "lm",
+      "name": "Lake Baikal",
+      "country": "Russia",
+      "region": null,
+      "coordinates": {
+        "lat": 53.5587,
+        "lng": 108.165
+      },
+      "element": "aether",
+      "archetyp": "Witness of Time",
+      "primaervibration": "Primordial Depth",
+      "correspondence": "Primordial Depth · Witness of Time · Depth / Time",
+      "keywords": [
+        "ether",
+        "primordial",
+        "depth",
+        "witness",
+        "time"
+      ],
+      "secondaryFrequencies": [],
+      "intensity": 6
+    },
+    {
+      "schemaVersion": 2,
+      "id": "ts",
+      "name": "Teotihuacán",
+      "country": "Mexico",
+      "region": null,
+      "coordinates": {
+        "lat": 19.6925,
+        "lng": -98.843
+      },
+      "element": "aether",
+      "archetyp": "Builder of Light",
+      "primaervibration": "City of the Gods",
+      "correspondence": "City of the Gods · Builder of Light · Light / Geometry",
+      "keywords": [
+        "ether",
+        "city",
+        "gods",
+        "builder",
+        "light",
+        "geometry"
+      ],
+      "secondaryFrequencies": [],
+      "intensity": 6
     }
   ]
 }

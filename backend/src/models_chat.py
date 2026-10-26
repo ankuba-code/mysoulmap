@@ -22,12 +22,26 @@ class ChatMessage(BaseModel):
         return value
 
 
+class RitualContext(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    archetype_symbol: str = Field(min_length=1, max_length=40)
+    element: str = Field(min_length=1, max_length=40)
+    inner_rhythm: str = Field(min_length=1, max_length=40)
+    emotional_intensity: int = Field(ge=1, le=10)
+    travel_direction: str = Field(min_length=1, max_length=40)
+    dominant_frequency: str = Field(min_length=1, max_length=400)
+    matched_place_ids: list[str] = Field(default_factory=list, max_length=3)
+
+
 class ChatRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     messages: list[ChatMessage] = Field(min_length=1, max_length=MAX_TURNS)
     shown_place_ids: list[str] = Field(default_factory=list, max_length=MAX_SHOWN_PLACE_IDS)
     language: Literal["de", "es", "en", "ru"] = "de"
+    from_ritual: bool = False
+    ritual_context: RitualContext | None = None
 
     @field_validator("shown_place_ids")
     @classmethod
@@ -55,6 +69,10 @@ class RecommendedPlace(BaseModel):
     id: str
     name: str
     booking_link: str
+    country: str = ""
+    coordinates: dict[str, float] | None = None
+    primaervibration: str = ""
+    correspondence: str = ""
 
 
 class ChatResponse(BaseModel):

@@ -1,5 +1,6 @@
 from fastapi.testclient import TestClient
 
+from src.atlas import PLACES
 from src.llm import LlmCallError
 from src.main import app
 from src.models_chat import LlmOutput
@@ -41,14 +42,14 @@ def test_chat_conversation_with_mocked_llm(monkeypatch) -> None:
     }
 
     async def fake_second(**_kwargs: object) -> LlmOutput:
-        return LlmOutput(message="Dann Uluru.", place_ids=["uluru"])
+        return LlmOutput(message="Dann Uluru.", place_ids=["ul"])
 
     monkeypatch.setattr("src.chat.complete_llm", fake_second)
     second = client.post("/chat", json=second_payload)
     assert second.status_code == 200
     assert second.json()["source"] == "llm"
-    assert [place["id"] for place in second.json()["recommended_places"]] == ["uluru"]
-    assert second.json()["shown_place_ids"] == ["mp", "uluru"]
+    assert [place["id"] for place in second.json()["recommended_places"]] == ["ul"]
+    assert second.json()["shown_place_ids"] == ["mp", "ul"]
 
 
 def test_chat_timeout_returns_fallback(monkeypatch) -> None:
@@ -74,7 +75,7 @@ def test_chat_scope_violation_returns_fallback(monkeypatch) -> None:
     assert response.status_code == 200
     body = response.json()
     assert body["source"] == "fallback"
-    allowed = {"mp", "sedona", "uluru"}
+    allowed = {place.id for place in PLACES}
     assert {place["id"] for place in body["recommended_places"]}.issubset(allowed)
 
 

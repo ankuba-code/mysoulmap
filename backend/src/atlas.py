@@ -26,6 +26,8 @@ class Place(BaseModel):
     element: str = Field(min_length=1)
     archetyp: str = Field(min_length=1)
     primaervibration: str = Field(min_length=1)
+    secondaryFrequencies: list[str] = Field(default_factory=list)
+    intensity: int = Field(ge=1, le=10)
     correspondence: str = Field(min_length=1)
     keywords: list[str]
 

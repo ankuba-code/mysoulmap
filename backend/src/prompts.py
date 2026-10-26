@@ -1,7 +1,7 @@
 import json
 
 from .atlas import Place
-from .models_chat import ChatMessage
+from .models_chat import ChatMessage, RitualContext
 
 
 def build_system_prompt(
@@ -9,6 +9,8 @@ def build_system_prompt(
     *,
     language: str,
     shown_place_ids: list[str],
+    ritual_context: RitualContext | None = None,
+    from_ritual: bool = False,
     strict: bool = False,
 ) -> str:
     catalog = [
@@ -50,6 +52,15 @@ Do not recommend these already shown place_ids again: {json.dumps(shown)}
 Output must match the structured schema: message (assistant reply text) and place_ids (atlas ids you actually recommend in this turn).
 If the user asks for something outside the atlas, stay inside the atlas and explain that Soulmap only recommends these places.
 """
+    if from_ritual or ritual_context is not None:
+        prompt += (
+            "\nThe user already completed the ritual. Use this context to refine recommendations "
+            "inside the atlas. Do not invent places outside the allowed place_ids.\n"
+            "Do NOT re-ask for element, archetype, intensity, mood, or ritual answers — they are known.\n"
+            "Prefer deepening matched_place_ids first; only then suggest other atlas places not in shown_place_ids.\n"
+        )
+    if ritual_context is not None:
+        prompt += f"Ritual context (JSON): {json.dumps(ritual_context.model_dump(), ensure_ascii=False)}\n"
     if strict:
         prompt += (
             "\nSTRICT: Every value in place_ids MUST be one of the allowed atlas ids. "
