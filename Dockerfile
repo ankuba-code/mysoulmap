@@ -1,6 +1,6 @@
 # Repo-Root-Build (Hostinger ~/application, Kontext = Projektwurzel)
 # CI baut weiterhin mit context ./frontend über frontend/Dockerfile
-FROM node:20-slim AS build
+FROM node:22-bookworm-slim AS build
 WORKDIR /app
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci

@@ -1,6 +1,6 @@
 # frontend/Dockerfile
 # Prod-Image: docker buildx build --platform linux/amd64 -t ghcr.io/ankuba-code/mysoulmap-web:latest .
-FROM node:20-slim AS build
+FROM node:22-bookworm-slim AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
