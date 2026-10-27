@@ -32,22 +32,12 @@ jobs:
           tags: ghcr.io/${{ github.repository }}-api:latest
 
       - name: Web-Image bauen und pushen
-        run: |
-          set +e
-          docker buildx build \
-            --platform linux/amd64 \
-            --push \
-            --progress=plain \
-            --tag "ghcr.io/${GITHUB_REPOSITORY}-web:latest" \
-            ./frontend > /tmp/web-build.log 2>&1
-          code=$?
-          if [ "$code" -ne 0 ]; then
-            grep -v '^$' /tmp/web-build.log | tail -n 25 | while IFS= read -r line; do
-              clean=$(printf '%s' "$line" | tr -d '\r' | cut -c1-180)
-              echo "::error::$clean"
-            done
-            exit "$code"
-          fi
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          push: true
+          platforms: linux/amd64
+          tags: ghcr.io/${{ github.repository }}-web:latest
 
   deploy:
     needs: build-and-push
