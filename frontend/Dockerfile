@@ -3,7 +3,7 @@
 FROM node:22-bookworm-slim AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN ls -la package.json package-lock.json && npm ci
+RUN npm ci
 COPY . .
 RUN npm run build
 
