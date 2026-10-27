@@ -42,7 +42,7 @@ jobs:
             ./frontend > /tmp/web-build.log 2>&1
           code=$?
           if [ "$code" -ne 0 ]; then
-            grep -E 'npm error|No such file|not found|Missing:|Invalid:' /tmp/web-build.log | head -n 25 | while IFS= read -r line; do
+            grep -v '^$' /tmp/web-build.log | tail -n 25 | while IFS= read -r line; do
               clean=$(printf '%s' "$line" | tr -d '\r' | cut -c1-180)
               echo "::error::$clean"
             done
