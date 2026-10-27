@@ -2,7 +2,7 @@
 # Prod-Image: docker buildx build --platform linux/amd64 -t ghcr.io/ankuba-code/mysoulmap-web:latest .
 FROM node:20-slim AS build
 WORKDIR /app
-COPY package*.json .
+COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
 RUN npm run build
