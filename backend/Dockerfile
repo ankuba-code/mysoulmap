@@ -9,8 +9,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY src/ ./src/
 COPY data/places.json ./data/places.json
 COPY data/country_centroids.csv ./data/country_centroids.csv
-COPY data/GeoLite2-Country.mmdb ./data/GeoLite2-Country.mmdb
-COPY data/GeoLite2-City.mmdb ./data/GeoLite2-City.mmdb
+#COPY data/GeoLite2-Country.mmdb ./data/GeoLite2-Country.mmdb
+#COPY data/GeoLite2-City.mmdb ./data/GeoLite2-City.mmdb
 COPY alembic.ini ./alembic.ini
 COPY migrations/ ./migrations/
 
