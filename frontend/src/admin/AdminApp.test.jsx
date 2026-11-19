@@ -20,12 +20,23 @@ const STATS = {
   daily: [{ date: "2026-09-25", form_submissions: 1, result_views: 1, fallbacks: 1 }],
   top_countries: [{ country_code: "DE", count: 2 }],
   top_clicked_places: [{ place_id: "mp", clicks: 1 }],
+  charts: {
+    world: "data:image/png;base64,abc",
+    daily: "data:image/png;base64,def",
+  },
+  monthly_report: {
+    month: "2026-09",
+    token_limit: 50000,
+    users: [],
+    topics: [{ label: "Wochenende am Meer", count: 2 }],
+  },
   llm_monitoring: {
     avg_latency_ms: 10,
     error_rate: 0,
     fallback_rate: 1,
     errors_by_code: {},
     fallback_by_code: { OPENAI_UNAVAILABLE: 1 },
+    window_15m: { status: "degraded", chat_turns: 4, reasons: ["fallback_rate"] },
   },
 };
 
@@ -60,12 +71,18 @@ describe("AdminApp", () => {
     await user.click(view.getByRole("button", { name: "Anmelden" }));
     expect(await screen.findByRole("heading", { name: /Statistik/ })).toBeInTheDocument();
     expect(screen.getByText("Formulare vs. Ergebnisse")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Grafiken" }));
+    expect(screen.getByRole("img", { name: "Weltkarte" })).toHaveAttribute("src", STATS.charts.world);
     await user.click(screen.getByRole("button", { name: "Herkunft" }));
     expect(screen.getByText("Top-Länder")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Beliebte Orte" }));
     expect(screen.getByRole("heading", { name: "Beliebte Orte" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "LLM-Ausfälle" }));
     expect(screen.getByText("Fallback nach Code")).toBeInTheDocument();
+    expect(screen.getByText("15 Minuten")).toBeInTheDocument();
+    expect(screen.getByText("Fallback")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Monatsreport" }));
+    expect(screen.getByText("Wochenende am Meer")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Rohdaten" }));
     expect(screen.getByText(/IP-Adressen/)).toBeInTheDocument();
   });

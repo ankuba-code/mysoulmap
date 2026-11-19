@@ -18,7 +18,7 @@ class Place(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     schemaVersion: Literal[2]
-    id: str = Field(min_length=1, max_length=20)
+    id: str = Field(min_length=1, max_length=40)
     name: str = Field(min_length=1)
     country: str = Field(min_length=1)
     region: str | None = None

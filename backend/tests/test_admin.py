@@ -109,6 +109,7 @@ def test_form_login_opens_dashboard() -> None:
     dashboard = client.get("/admin")
     assert dashboard.status_code == 200
     assert "Statistik" in dashboard.text
+    assert "15 Minuten" in dashboard.text
 
 
 def test_stats_requires_session() -> None:
@@ -129,10 +130,22 @@ def test_stats_returns_aggregates_and_fallback_rate() -> None:
     assert body["affiliate_clicks"] == 1
     assert body["llm_monitoring"]["fallback_rate"] == 0.5
     assert body["llm_monitoring"]["fallback_by_code"] == {"OPENAI_TIMEOUT": 1}
+    assert body["llm_monitoring"]["window_15m"]["chat_turns"] == 2
+    assert body["llm_monitoring"]["window_15m"]["status"] == "ok"
     assert body["top_clicked_places"] == [{"place_id": "mp", "clicks": 1}]
     assert body["daily"]
     assert body["daily"][0]["form_submissions"] == 1
     assert "events" not in body
+    report = body["monthly_report"]
+    assert report["token_limit"] == 50000
+    user = next(item for item in report["users"] if item["ip_address"] == "1.1.1.1")
+    assert user["tokens_used"] == 30
+    page = client.get("/admin")
+    assert "Monatsreport" in page.text
+    assert "Themen" in page.text
+    assert body["charts"]["world"].startswith("data:image/png;base64,")
+    assert "Weltkarte" in page.text
+    assert page.text.count("<img") >= 4
 
 
 def test_stats_raw_includes_ip() -> None:
@@ -144,6 +157,7 @@ def test_stats_raw_includes_ip() -> None:
     events = response.json()["events"]
     assert events
     assert any(item["ip_address"] == "1.1.1.1" for item in events)
+    assert all("user_prompt" in item for item in events)
 
 
 def test_logout_invalidates_session() -> None:
@@ -172,6 +186,17 @@ def test_purge_deletes_events_older_than_six_months() -> None:
                 country_code="DE",
             )
         )
+        session.add(
+            UsageEvent(
+                event_type=EventType.result_view,
+                occurred_at=now - timedelta(days=200),
+                ip_address="9.9.9.9",
+                country_code="DE",
+                user_prompt="alter prompt",
+            )
+        )
         session.commit()
         deleted = purge_old_events(session, now)
+        leftover = session.exec(select(UsageEvent).where(UsageEvent.ip_address == "9.9.9.9")).all()
     assert deleted >= 1
+    assert leftover == []

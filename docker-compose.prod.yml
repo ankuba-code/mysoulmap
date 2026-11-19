@@ -4,6 +4,10 @@ services:
     restart: unless-stopped
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY:-}
+      - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY:-}
+      - LANGFUSE_BASE_URL=${LANGFUSE_BASE_URL:-https://cloud.langfuse.com}
+      - LANGFUSE_PROJECT_URL=${LANGFUSE_PROJECT_URL:-}
       - BOOKING_AFFILIATE_ID=${BOOKING_AFFILIATE_ID}
       - MYSQL_HOST=db
       - MYSQL_USER=${MYSQL_USER}
@@ -14,9 +18,20 @@ services:
       - ADMIN_SESSION_SECRET=${ADMIN_SESSION_SECRET:-}
       - CORS_ORIGIN=${CORS_ORIGIN:-https://app.mithertz.online}
       - FORWARDED_ALLOW_IPS=${FORWARDED_ALLOW_IPS:-*}
-      - GEOIP_DB_PATH=${GEOIP_DB_PATH:-}
+      - GEOIP_DB_PATH=${GEOIP_DB_PATH:-/geoip/GeoLite2-Country.mmdb}
+      - GEOIP_CITY_DB_PATH=${GEOIP_CITY_DB_PATH:-/geoip/GeoLite2-City.mmdb}
+      - MONITOR_TOKEN=${MONITOR_TOKEN:-}
+      - REDIS_URL=redis://redis:6379/0
+      - GLOBAL_DAILY_TOKEN_LIMIT=${GLOBAL_DAILY_TOKEN_LIMIT:-500000}
+      - GLOBAL_HOURLY_TOKEN_LIMIT=${GLOBAL_HOURLY_TOKEN_LIMIT:-}
+      - GLOBAL_LLM_CALLS_PER_MINUTE=${GLOBAL_LLM_CALLS_PER_MINUTE:-30}
+    volumes:
+      - ./backend/data:/geoip:ro
     depends_on:
-      - db
+      db:
+        condition: service_started
+      redis:
+        condition: service_healthy
     networks:
       - internal
 
@@ -32,6 +47,41 @@ services:
       - db_data:/var/lib/mysql
     networks:
       - internal
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    networks:
+      - internal
+
+  watchdog:
+    image: ghcr.io/ankuba-code/mysoulmap-api:latest
+    command: ["python", "-m", "src.watchdog"]
+    restart: unless-stopped
+    environment:
+      - ALERT_EMAIL=${ALERT_EMAIL:-}
+      - SMTP_HOST=${SMTP_HOST:-}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASSWORD=${SMTP_PASSWORD:-}
+      - SMTP_FROM=${SMTP_FROM:-}
+      - MONITOR_TOKEN=${MONITOR_TOKEN:-}
+      - HEALTH_URL=http://api:8000/health
+      - SIGNALS_URL=http://api:8000/health/signals
+      - WEB_URL=http://web/
+    depends_on:
+      - api
+      - web
+    networks:
+      - internal
+    healthcheck:
+      disable: true
 
   web:
     image: ghcr.io/ankuba-code/mysoulmap-web:latest

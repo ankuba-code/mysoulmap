@@ -12,7 +12,7 @@ client = TestClient(app)
 
 def test_go_redirects_to_booking_and_logs_click(monkeypatch) -> None:
     monkeypatch.setenv("BOOKING_AFFILIATE_ID", "123456")
-    response = client.get("/go/mp", params={"lang": "en"}, follow_redirects=False)
+    response = client.get("/go/machu_picchu_pe", params={"lang": "en"}, follow_redirects=False)
     assert response.status_code == 302
     location = response.headers["location"]
     parsed = urlparse(location)
@@ -20,7 +20,7 @@ def test_go_redirects_to_booking_and_logs_click(monkeypatch) -> None:
     assert parse_qs(parsed.query)["ss"] == ["Machu Picchu, Peru"]
     with Session(get_engine()) as session:
         events = session.exec(select(UsageEvent).where(UsageEvent.event_type == EventType.affiliate_click)).all()
-    assert any(event.place_id == "mp" for event in events)
+    assert any(event.place_id == "machu_picchu_pe" for event in events)
 
 
 def test_go_unknown_place_is_404() -> None:

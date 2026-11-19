@@ -18,7 +18,7 @@ def test_chat_conversation_with_mocked_llm(monkeypatch) -> None:
     async def fake_llm(**_kwargs: object) -> LlmOutput:
         return LlmOutput(
             message="Für eine Erd-Qualität passt Machu Picchu.",
-            place_ids=["mp"],
+            place_ids=["machu_picchu_pe"],
         )
 
     monkeypatch.setattr("src.chat.complete_llm", fake_llm)
@@ -28,8 +28,8 @@ def test_chat_conversation_with_mocked_llm(monkeypatch) -> None:
     assert body["source"] == "llm"
     assert body["ai_disclosure"] is True
     assert body["message"]["role"] == "assistant"
-    assert body["recommended_places"][0]["id"] == "mp"
-    assert body["shown_place_ids"] == ["mp"]
+    assert body["recommended_places"][0]["id"] == "machu_picchu_pe"
+    assert body["shown_place_ids"] == ["machu_picchu_pe"]
 
     second_payload = {
         "messages": [
@@ -42,14 +42,14 @@ def test_chat_conversation_with_mocked_llm(monkeypatch) -> None:
     }
 
     async def fake_second(**_kwargs: object) -> LlmOutput:
-        return LlmOutput(message="Dann Uluru.", place_ids=["ul"])
+        return LlmOutput(message="Dann Uluru.", place_ids=["uluru_au"])
 
     monkeypatch.setattr("src.chat.complete_llm", fake_second)
     second = client.post("/chat", json=second_payload)
     assert second.status_code == 200
     assert second.json()["source"] == "llm"
-    assert [place["id"] for place in second.json()["recommended_places"]] == ["ul"]
-    assert second.json()["shown_place_ids"] == ["mp", "ul"]
+    assert [place["id"] for place in second.json()["recommended_places"]] == ["uluru_au"]
+    assert second.json()["shown_place_ids"] == ["machu_picchu_pe", "uluru_au"]
 
 
 def test_chat_timeout_returns_fallback(monkeypatch) -> None:

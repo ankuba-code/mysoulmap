@@ -4,6 +4,7 @@ from slowapi.util import get_remote_address
 LIMIT_CHAT = "20/minute"
 LIMIT_MATCH = "20/minute"
 LIMIT_ATLAS = "60/minute"
+LIMIT_GEO = "60/minute"
 LIMIT_GO = "30/minute"
 LIMIT_ADMIN_STATS = "10/minute"
 LIMIT_ADMIN_LOGIN = "5/minute"

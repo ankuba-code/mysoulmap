@@ -50,6 +50,38 @@ export function OverviewPanel({ stats }) {
   );
 }
 
+export function LangfusePanel({ widgets }) {
+  if (!widgets) return null;
+  if (widgets.error) {
+    return <p className="text-sm text-rose-700">Die Langfuse-Kennzahlen sind gerade nicht erreichbar.</p>;
+  }
+  const days = widgets.days || [];
+  return (
+    <div className="space-y-6">
+      <h2 className="text-lg font-semibold">Langfuse, {widgets.period_days} Tage</h2>
+      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <Stat label="Aufrufe" value={widgets.calls} />
+        <Stat label="Kosten" value={`${Number(widgets.cost_usd || 0).toFixed(4)} $`} />
+        <Stat label="Tokens" value={widgets.tokens} />
+        <Stat label="Latenz p95" value={`${widgets.latency_ms ?? 0} ms`} />
+      </dl>
+      <ChartFrame title="Aufrufe pro Tag" empty={!days.length}>
+        <div className="h-72">
+          <ResponsiveContainer>
+            <BarChart data={days}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" />
+              <YAxis allowDecimals={false} />
+              <Tooltip />
+              <Bar dataKey="calls" name="Aufrufe" fill="#b45309" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </ChartFrame>
+    </div>
+  );
+}
+
 export function OriginPanel({ stats }) {
   const rows = countryBars(stats);
   return (
@@ -95,10 +127,11 @@ export function FallbackPanel({ stats }) {
   const days = overviewSeries(stats);
   return (
     <div className="space-y-6">
-      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Stat label="Fallback-Rate" value={llm.fallback_rate} />
         <Stat label="Fehlerquote" value={llm.error_rate} />
         <Stat label="Latenz" value={`${llm.avg_latency_ms ?? 0} ms`} />
+        <Stat label="15 Minuten" value={windowLabel(llm.window_15m)} />
       </dl>
       <ChartFrame title="Fallbacks pro Tag" empty={!days.length}>
         <div className="h-64">
@@ -143,13 +176,121 @@ export function FallbackPanel({ stats }) {
   );
 }
 
+const HINTS = {
+  rate_limited: "viele Rate-Limits",
+  short_intervals: "kurze Abstände",
+  identical_prompts: "gleiche Prompts",
+  token_ratio: "Token-Limit nah",
+};
+
+const CHARTS = [
+  ["world", "Weltkarte"],
+  ["daily", "Verlauf"],
+  ["topics", "Themen"],
+  ["tokens", "Tokens"],
+];
+
+export function ChartPanel({ charts }) {
+  const images = CHARTS.filter(([key]) => charts?.[key]);
+  if (!images.length) {
+    return <p className="text-sm text-stone-500">Keine Grafiken</p>;
+  }
+  return (
+    <div className="space-y-6">
+      {images.map(([key, title]) => (
+        <figure key={key} className="space-y-2">
+          <h2 className="text-lg font-semibold">{title}</h2>
+          <img src={charts[key]} alt={title} className="w-full rounded-xl bg-white" />
+        </figure>
+      ))}
+    </div>
+  );
+}
+
+export function MonthPanel({ report }) {
+  const data = report || { users: [], topics: [] };
+  const users = data.users || [];
+  const topics = data.topics || [];
+  return (
+    <div className="space-y-6">
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold">Monatsreport {data.month || ""}</h2>
+        <p className="text-sm text-stone-600">
+          Hinweise beschreiben Auffälligkeiten. Sie stufen niemanden als Bot ein.
+        </p>
+        {users.length ? (
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-stone-200">
+                  <th className="py-2 pr-3">IP</th>
+                  <th className="py-2 pr-3">Tokens</th>
+                  <th className="py-2 pr-3">Nutzungszeit</th>
+                  <th className="py-2 pr-3">Rate-Limits</th>
+                  <th className="py-2 pr-3">Kurze Abstände</th>
+                  <th className="py-2 pr-3">Gleicher Prompt</th>
+                  <th className="py-2 pr-3">Hinweise</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map((user) => (
+                  <tr key={user.ip_address} className="border-b border-stone-100">
+                    <td className="py-2 pr-3">{user.ip_address}</td>
+                    <td className="py-2 pr-3">
+                      {user.tokens_used} / {user.token_limit}
+                    </td>
+                    <td className="py-2 pr-3">
+                      {user.first_at} – {user.last_at} ({user.active_seconds} s)
+                    </td>
+                    <td className="py-2 pr-3">{user.rate_limited}</td>
+                    <td className="py-2 pr-3">{user.short_gaps}</td>
+                    <td className="py-2 pr-3">{user.identical_prompt_share}</td>
+                    <td className="py-2 pr-3">
+                      {(user.hints || []).map((hint) => HINTS[hint] || hint).join(", ") || "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="text-sm text-stone-500">Keine Daten</p>
+        )}
+      </section>
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold">Themen</h2>
+        {topics.length ? (
+          <table className="min-w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-stone-200">
+                <th className="py-2 pr-3">Thema</th>
+                <th className="py-2 pr-3">Anzahl</th>
+              </tr>
+            </thead>
+            <tbody>
+              {topics.map((topic) => (
+                <tr key={topic.label} className="border-b border-stone-100">
+                  <td className="py-2 pr-3">{topic.label}</td>
+                  <td className="py-2 pr-3">{topic.count}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <p className="text-sm text-stone-500">Keine Daten</p>
+        )}
+      </section>
+    </div>
+  );
+}
+
 export function RawPanel({ events, onConfirm, confirmed, busy }) {
   if (!confirmed) {
     return (
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">Rohdaten</h2>
         <p className="text-sm text-stone-600">
-          Einzelne Events enthalten IP-Adressen. Nur laden, wenn du sie wirklich brauchst.
+          Einzelne Events enthalten IP-Adressen und den gekürzten Prompt. Nur laden, wenn du sie wirklich brauchst.
         </p>
         <button
           type="button"
@@ -173,9 +314,11 @@ export function RawPanel({ events, onConfirm, confirmed, busy }) {
             <th className="py-2 pr-3">Zeit</th>
             <th className="py-2 pr-3">Typ</th>
             <th className="py-2 pr-3">Land</th>
+            <th className="py-2 pr-3">OS-Sprache</th>
             <th className="py-2 pr-3">Ort</th>
             <th className="py-2 pr-3">Status</th>
             <th className="py-2 pr-3">IP</th>
+            <th className="py-2 pr-3">Prompt</th>
           </tr>
         </thead>
         <tbody>
@@ -184,15 +327,33 @@ export function RawPanel({ events, onConfirm, confirmed, busy }) {
               <td className="py-2 pr-3">{event.occurred_at}</td>
               <td className="py-2 pr-3">{event.event_type}</td>
               <td className="py-2 pr-3">{event.country_code}</td>
+              <td className="py-2 pr-3">{event.os_language || "—"}</td>
               <td className="py-2 pr-3">{event.place_id || "—"}</td>
               <td className="py-2 pr-3">{event.llm_status || event.error_code || "—"}</td>
               <td className="py-2 pr-3">{event.ip_address}</td>
+              <td className="py-2 pr-3">{event.user_prompt || "—"}</td>
             </tr>
           ))}
         </tbody>
       </table>
     </div>
   );
+}
+
+const WINDOW_REASONS = {
+  fallback_rate: "Fallback",
+  error_rate: "Fehler",
+  rate_limited: "Rate-Limit",
+};
+
+function windowLabel(window) {
+  if (!window) return "—";
+  if (window.status === "degraded") {
+    const reasons = (window.reasons || []).map((reason) => WINDOW_REASONS[reason] || reason);
+    return reasons.join(", ") || "auffällig";
+  }
+  if ((window.chat_turns ?? 0) < 3) return "wenig Daten";
+  return "ruhig";
 }
 
 function Stat({ label, value }) {

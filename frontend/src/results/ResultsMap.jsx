@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { MapContainer, Marker, Popup, TileLayer, Tooltip, useMap } from "react-leaflet";
+import { Circle, MapContainer, Marker, Popup, TileLayer, Tooltip, useMap } from "react-leaflet";
 import L from "leaflet";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
@@ -28,19 +28,23 @@ function FocusPlace({ placeId, places }) {
   return null;
 }
 
-function FitPlaces({ places }) {
+function FitPlaces({ places, origin }) {
   const map = useMap();
   useEffect(() => {
-    if (!places.length) {
+    const points = places.map((place) => [place.coordinates.lat, place.coordinates.lng]);
+    if (origin) {
+      points.push([origin.latitude, origin.longitude]);
+    }
+    if (!points.length) {
       return;
     }
-    const bounds = L.latLngBounds(places.map((place) => [place.coordinates.lat, place.coordinates.lng]));
+    const bounds = L.latLngBounds(points);
     map.fitBounds(bounds, { padding: [32, 32], maxZoom: 5 });
-  }, [map, places]);
+  }, [map, origin, places]);
   return null;
 }
 
-export default function ResultsMap({ places, focusPlaceId = null }) {
+export default function ResultsMap({ places, focusPlaceId = null, origin = null, originLabel = "" }) {
   const first = places[0]?.coordinates;
   return (
     <MapContainer
@@ -53,8 +57,21 @@ export default function ResultsMap({ places, focusPlaceId = null }) {
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      <FitPlaces places={places} />
+      <FitPlaces places={places} origin={origin} />
       <FocusPlace placeId={focusPlaceId} places={places} />
+      {origin ? (
+        <Circle
+          center={[origin.latitude, origin.longitude]}
+          radius={origin.accuracy_radius_km * 1000}
+          pathOptions={{ color: "#b45309", weight: 1, fillColor: "#b45309", fillOpacity: 0.18 }}
+        >
+          {originLabel ? (
+            <Tooltip permanent direction="top">
+              {originLabel}
+            </Tooltip>
+          ) : null}
+        </Circle>
+      ) : null}
       {places.map((place) => (
         <Marker key={place.id} position={[place.coordinates.lat, place.coordinates.lng]} icon={icon}>
           <Tooltip permanent direction="top" offset={[0, -28]}>

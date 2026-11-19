@@ -5,7 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 MAX_TURNS = 20
 MAX_MESSAGE_LENGTH = 4000
 MAX_SHOWN_PLACE_IDS = 40
-MAX_PLACE_ID_LENGTH = 20
+MAX_PLACE_ID_LENGTH = 40
 
 
 class ChatMessage(BaseModel):
@@ -32,6 +32,18 @@ class RitualContext(BaseModel):
     travel_direction: str = Field(min_length=1, max_length=40)
     dominant_frequency: str = Field(min_length=1, max_length=400)
     matched_place_ids: list[str] = Field(default_factory=list, max_length=3)
+    lines: list[str] = Field(default_factory=list, max_length=8)
+
+    @field_validator("lines")
+    @classmethod
+    def lines_bounded(cls, values: list[str]) -> list[str]:
+        cleaned: list[str] = []
+        for item in values:
+            text = item.strip()
+            if not text or len(text) > 500:
+                raise ValueError("Ungültige Ritualzeile")
+            cleaned.append(text)
+        return cleaned
 
 
 class ChatRequest(BaseModel):
@@ -58,11 +70,33 @@ class ChatRequest(BaseModel):
         return self
 
 
+class PlaceNote(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    place_id: str = Field(min_length=1, max_length=MAX_PLACE_ID_LENGTH)
+    text: str = Field(min_length=1, max_length=MAX_MESSAGE_LENGTH)
+
+    @field_validator("text")
+    @classmethod
+    def text_not_blank(cls, value: str) -> str:
+        cleaned = value.strip()
+        if not cleaned:
+            raise ValueError("Ortshinweis darf nicht leer sein")
+        return cleaned
+
+
 class LlmOutput(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     message: str
     place_ids: list[str]
+    overview: str = ""
+    place_notes: list[PlaceNote] = Field(default_factory=list, max_length=6)
+
+    @field_validator("overview")
+    @classmethod
+    def overview_stripped(cls, value: str) -> str:
+        return value.strip()
 
 
 class RecommendedPlace(BaseModel):
@@ -75,9 +109,20 @@ class RecommendedPlace(BaseModel):
     correspondence: str = ""
 
 
+class ChatSection(BaseModel):
+    kind: Literal["overview", "place"]
+    text: str
+    place_id: str | None = None
+    name: str = ""
+    country: str = ""
+    primaervibration: str = ""
+
+
 class ChatResponse(BaseModel):
     message: ChatMessage
     shown_place_ids: list[str]
     recommended_places: list[RecommendedPlace]
+    sections: list[ChatSection] = Field(default_factory=list)
     source: Literal["llm", "fallback"]
     ai_disclosure: bool = True
+    token_notice: Literal["approaching"] | None = None

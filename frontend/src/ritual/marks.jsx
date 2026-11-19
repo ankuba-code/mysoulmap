@@ -2,7 +2,7 @@ const ICONS = {
   q0: ["diamond", "triangle", "circle", "wave", "square"],
   q1: ["up", "down", "eye", "arrow", "pause"],
   q2: ["spark", "triangle", "eye", "chevron", "zigzag"],
-  q3: ["flame", "water", "earth", "air"],
+  q3: ["flame", "water", "earth", "air", "aether"],
   q4: ["circle", "triangle", "cross", "rhombus", "spiral"],
   q5: ["wave", "up", "water", "pause"],
 };
@@ -66,6 +66,7 @@ export function Mark({ name, className = "h-3 w-3" }) {
       {name === "zigzag" ? <path {...common} d="M2 8 L5 3 L12 10" /> : null}
       {name === "flame" ? <path {...common} d="M7 12 C4 9 2 7 4 4 C6 2 10 4 7 7 C10 5 11 8 7 12 Z" /> : null}
       {name === "air" ? <path {...common} d="M2 7 Q7 2 12 7 Q7 12 2 7" /> : null}
+      {name === "aether" ? <path {...common} d="M7 2 V12 M2 7 H12 M4.2 4.2 L9.8 9.8 M9.8 4.2 L4.2 9.8" /> : null}
       {name === "cross" ? <path {...common} d="M7 2 V12 M2 7 H12" /> : null}
       {name === "spiral" ? <path {...common} d="M7 7 Q12 3 10 1 Q5 0 2 4 Q0 8 4 11 Q8 14 12 10" /> : null}
     </svg>

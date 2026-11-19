@@ -51,5 +51,47 @@ describe("applyResponse", () => {
     ]);
     expect(next.messages[1].recommendedPlaces[0].id).toBe("mp");
     expect(next.messages[1].source).toBe("fallback");
+    expect(next.messages[1].sections).toEqual([]);
+  });
+
+  it("keeps atlas headings on the assistant turn", () => {
+    const next = applyResponse(INITIAL_STATE, "Mehr zu den Orten", {
+      ...response,
+      source: "llm",
+      recommended_places: [],
+      sections: [
+        { kind: "overview", text: "Anreise über Lima.", place_id: null, name: "", country: "", primaervibration: "" },
+        {
+          kind: "place",
+          text: "Früh auf den Berg.",
+          place_id: "mp",
+          name: "Machu Picchu",
+          country: "Peru",
+          primaervibration: "Sacred Mountain",
+        },
+      ],
+    });
+    expect(next.messages[1].sections).toEqual([
+      {
+        kind: "overview",
+        text: "Anreise über Lima.",
+        placeId: "",
+        name: "",
+        country: "",
+        primaervibration: "",
+      },
+      {
+        kind: "place",
+        text: "Früh auf den Berg.",
+        placeId: "mp",
+        name: "Machu Picchu",
+        country: "Peru",
+        primaervibration: "Sacred Mountain",
+      },
+    ]);
+    expect(toApiMessages(next.messages)[1]).toEqual({
+      role: "assistant",
+      content: "Machu Picchu.",
+    });
   });
 });

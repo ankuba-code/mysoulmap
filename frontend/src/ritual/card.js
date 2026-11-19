@@ -73,6 +73,80 @@ const CARDS = {
       desc: "Something in you wants depth. Not sinking — diving. Conscious, curious, willing to change.",
     },
   ],
+  es: [
+    {
+      name: "Silencio que gira",
+      symbol: "Círculo",
+      ton: "En espera",
+      impuls: "Girar",
+      desc: "Estás en una fase de permanencia consciente. El mundo gira — tú estás en el centro y miras. Esta carta llama lugares que descansan en sí mismos.",
+    },
+    {
+      name: "Fuego que asciende",
+      symbol: "Triángulo",
+      ton: "Expansivo",
+      impuls: "Ascenso",
+      desc: "Algo en ti arde y quiere salir. Esta carta señala hacia arriba — llama lugares que elevan, amplían y abren el horizonte.",
+    },
+    {
+      name: "Travesía",
+      symbol: "Cruz",
+      ton: "En búsqueda",
+      impuls: "Cruzar",
+      desc: "Estás en un umbral. Ni antes ni después — en medio. Esta carta llama puentes, pasos y desfiladeros.",
+    },
+    {
+      name: "Profundidad que arraiga",
+      symbol: "Rombo",
+      ton: "En reposo",
+      impuls: "Detenerse",
+      desc: "No necesitas movimiento — necesitas echar raíces. Esta carta señala hacia abajo, a la tierra, al silencio.",
+    },
+    {
+      name: "Profundidad que desciende",
+      symbol: "Espiral",
+      ton: "Transformador",
+      impuls: "Descenso",
+      desc: "Algo en ti quiere ir a lo hondo. No hundirse — sumergirse. Con conciencia, curiosidad y ganas de transformarte.",
+    },
+  ],
+  ru: [
+    {
+      name: "Кружащая тишина",
+      symbol: "Круг",
+      ton: "Ожидание",
+      impuls: "Кружение",
+      desc: "Ты в фазе осознанного пребывания. Мир вращается — ты стоишь в центре и смотришь. Эта карта зовёт места, которые покоятся в себе.",
+    },
+    {
+      name: "Восходящий огонь",
+      symbol: "Треугольник",
+      ton: "Расширение",
+      impuls: "Подъём",
+      desc: "В тебе горит то, что хочет наружу. Эта карта указывает вверх — она зовёт места, которые поднимают, расширяют и открывают горизонт.",
+    },
+    {
+      name: "Переправа",
+      symbol: "Крест",
+      ton: "Поиск",
+      impuls: "Пересечение",
+      desc: "Ты стоишь на пороге. Не перед ним и не за ним — посреди. Эта карта зовёт мосты, перевалы, ущелья.",
+    },
+    {
+      name: "Укореняющая глубина",
+      symbol: "Ромб",
+      ton: "Покой",
+      impuls: "Остановка",
+      desc: "Тебе не нужно движение — тебе нужно укоренение. Эта карта указывает вниз, в землю, в тишину.",
+    },
+    {
+      name: "Нисходящая глубина",
+      symbol: "Спираль",
+      ton: "Преображение",
+      impuls: "Спуск",
+      desc: "Что-то в тебе хочет глубины. Не тонуть — погружаться. Осознанно, с любопытством, готовое к перемене.",
+    },
+  ],
 };
 
 export function pickCard(answers, language = "de") {

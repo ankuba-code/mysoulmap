@@ -7,11 +7,11 @@
 ## Requirements
 
 ### Requirement: Zustandsloser Chat
-Das System SHALL den vollständigen Verlauf, `shown_place_ids` und die Sprache (`de`, `en`, `es`, `ru`) vom Client entgegennehmen und keine Konversation speichern. Die Antwort SHALL `message`, `shown_place_ids`, `recommended_places`, `source` und `ai_disclosure` enthalten.
+Das System SHALL den vollständigen Verlauf, `shown_place_ids` und die Sprache (`de`, `en`, `es`, `ru`) vom Client entgegennehmen. Der Server SHALL den Verlauf nicht behalten und nur die letzte Nutzernachricht, gekürzt auf 500 Zeichen, am `result_view` speichern. Die Antwort SHALL `message`, `shown_place_ids`, `recommended_places`, `source`, `ai_disclosure` und `token_notice` enthalten.
 
 #### Scenario: Folgefrage
 - **WHEN** der Client den bisherigen Verlauf und bereits gezeigte Ort-IDs sendet
-- **THEN** speichert der Server diesen Verlauf nicht und empfiehlt nur neu genannte Atlas-Orte
+- **THEN** speichert der Server diesen Verlauf nicht, behält nur die gekürzte letzte Nutzernachricht und empfiehlt nur neu genannte Atlas-Orte
 
 ### Requirement: Nur Atlas-Orte
 Das System SHALL ausschließlich `place_id`-Werte aus `places.json` akzeptieren. Unbekannte IDs aus der Modellantwort SHALL einen erneuten Versuch mit verschärftem Prompt auslösen und danach den Fallback.
@@ -40,3 +40,10 @@ Eine Nachricht SHALL höchstens 4000 Zeichen haben, der Verlauf höchstens 20 Na
 #### Scenario: Zu langer Verlauf
 - **WHEN** der Client mehr als 20 Nachrichten sendet
 - **THEN** antwortet die API mit 422 und dem Fehlercode `VALIDATION_ERROR`
+
+### Requirement: Token-Limit
+`POST /chat` SHALL vor dem Modellaufruf die Summe aus Eingabe- und Ausgabe-Tokens dieser IP über die letzten 30 Tage prüfen. Ab 50.000 Tokens SHALL die API mit 429 und dem Code `TOKEN_LIMIT` antworten und das Modell nicht aufrufen. Ab 90 Prozent dieses Limits SHALL eine erfolgreiche Antwort `token_notice` auf `approaching` setzen. Darunter bleibt `token_notice` leer. Ein bereits begonnener Aufruf darf das Limit einmal überschreiten.
+
+#### Scenario: Limit erreicht
+- **WHEN** die IP in 30 Tagen bereits 50.000 Tokens verbraucht hat
+- **THEN** antwortet `/chat` mit 429 und `TOKEN_LIMIT`, ohne das Modell aufzurufen

@@ -14,6 +14,7 @@ os.environ["ADMIN_PASSWORD_HASH"] = bcrypt.hashpw(
 
 from src.db import init_db  # noqa: E402
 from src.models_events import UsageEvent  # noqa: E402, F401
+from src.budget import reset_budget  # noqa: E402
 from src.rate_limit import reset_rate_limits  # noqa: E402
 
 init_db()
@@ -22,3 +23,4 @@ init_db()
 @pytest.fixture(autouse=True)
 def _reset_rate_limits() -> None:
     reset_rate_limits()
+    reset_budget()

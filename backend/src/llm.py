@@ -1,6 +1,8 @@
 import asyncio
+import logging
 import os
 from contextvars import ContextVar
+from urllib.parse import urlparse
 
 from openai import (
     APIConnectionError,
@@ -13,8 +15,13 @@ from openai import (
 from .models_chat import ChatMessage, LlmOutput
 from .prompts import to_openai_messages
 
+logger = logging.getLogger("soulmap.llm")
+
 MODEL = "gpt-5-mini"
-TIMEOUT_SECONDS = 20.0
+# Stabiler Schlüssel, damit Folgefragen auf derselben Cache-Route landen.
+# gpt-5-mini cached nur das gemeinsame Präfix und routet dafür über diesen Key.
+PROMPT_CACHE_KEY = "soulmap"
+TIMEOUT_SECONDS = 45.0
 RETRY_BACKOFF_SECONDS = 0.5
 _llm_usage: ContextVar[dict[str, int | None]] = ContextVar("llm_usage", default={})
 
@@ -31,8 +38,35 @@ class LlmCallError(Exception):
         super().__init__(code)
 
 
+def langfuse_enabled() -> bool:
+    return bool(os.getenv("LANGFUSE_PUBLIC_KEY", "").strip() and os.getenv("LANGFUSE_SECRET_KEY", "").strip())
+
+
+def langfuse_project_url() -> str | None:
+    raw = os.getenv("LANGFUSE_PROJECT_URL", "").strip()
+    parsed = urlparse(raw)
+    if parsed.scheme != "https" or not parsed.netloc:
+        return None
+    return raw
+
+
+def flush_langfuse() -> None:
+    if not langfuse_enabled():
+        return
+    try:
+        from langfuse import get_client
+
+        get_client().flush()
+    except Exception:
+        logger.exception("langfuse_flush_failed")
+
+
 def _client() -> AsyncOpenAI:
-    return AsyncOpenAI(timeout=TIMEOUT_SECONDS)
+    if not langfuse_enabled():
+        return AsyncOpenAI(timeout=TIMEOUT_SECONDS)
+    from langfuse.openai import AsyncOpenAI as LangfuseAsyncOpenAI
+
+    return LangfuseAsyncOpenAI(timeout=TIMEOUT_SECONDS)
 
 
 async def complete_llm(
@@ -77,18 +111,19 @@ async def complete_llm(
 
 async def _parse_once(payload: list[dict[str, str]]) -> LlmOutput:
     client = _client()
+    request: dict[str, object] = {
+        "model": MODEL,
+        "messages": payload,
+        "response_format": LlmOutput,
+        "prompt_cache_key": PROMPT_CACHE_KEY,
+    }
+    if langfuse_enabled():
+        request["name"] = "soulmap-chat"
+        request["metadata"] = {"prompt_cache_key": PROMPT_CACHE_KEY}
     try:
-        completion = await client.beta.chat.completions.parse(
-            model=MODEL,
-            messages=payload,
-            response_format=LlmOutput,
-        )
+        completion = await client.beta.chat.completions.parse(**request)
     except AttributeError:
-        completion = await client.chat.completions.parse(
-            model=MODEL,
-            messages=payload,
-            response_format=LlmOutput,
-        )
+        completion = await client.chat.completions.parse(**request)
 
     parsed = completion.choices[0].message.parsed
     if parsed is None:

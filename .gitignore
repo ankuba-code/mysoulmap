@@ -1,5 +1,6 @@
 .venv/
 .idea/
+claude/
 __pycache__/
 *.py[cod]
 .env
@@ -11,3 +12,4 @@ dist/
 .mypy_cache/
 _onlyhostinger_docker-compose.prod.yml
 GeoLite2*.mmdb
+GeoIP.conf

@@ -2,7 +2,7 @@
   "places": [
     {
       "schemaVersion": 2,
-      "id": "mp",
+      "id": "machu_picchu_pe",
       "name": "Machu Picchu",
       "country": "Peru",
       "region": null,
@@ -27,7 +27,7 @@
     },
     {
       "schemaVersion": 2,
-      "id": "ul",
+      "id": "uluru_au",
       "name": "Uluru",
       "country": "Australia",
       "region": null,
@@ -52,7 +52,7 @@
     },
     {
       "schemaVersion": 2,
-      "id": "pt",
+      "id": "petra_jo",
       "name": "Petra",
       "country": "Jordan",
       "region": null,
@@ -78,7 +78,7 @@
     },
     {
       "schemaVersion": 2,
-      "id": "bf",
+      "id": "banff_ca",
       "name": "Banff",
       "country": "Canada",
       "region": null,
@@ -104,7 +104,7 @@
     },
     {
       "schemaVersion": 2,
-      "id": "vr",
+      "id": "varanasi_in",
       "name": "Varanasi",
       "country": "India",
       "region": null,
@@ -128,7 +128,7 @@
     },
     {
       "schemaVersion": 2,
-      "id": "gn",
+      "id": "ganges_river_in",
       "name": "Ganges River",
       "country": "India",
       "region": null,
@@ -151,7 +151,7 @@
     },
     {
       "schemaVersion": 2,
-      "id": "msm",
+      "id": "mont_saint_michel_fr",
       "name": "Mont Saint-Michel",
       "country": "France",
       "region": null,
@@ -175,7 +175,7 @@
     },
     {
       "schemaVersion": 2,
-      "id": "su",
+      "id": "salar_de_uyuni_bo",
       "name": "Salar de Uyuni",
       "country": "Bolivia",
       "region": null,
@@ -199,7 +199,7 @@
     },
     {
       "schemaVersion": 2,
-      "id": "rk",
+      "id": "reykjavik_is",
       "name": "Reykjavik",
       "country": "Iceland",
       "region": null,
@@ -223,7 +223,7 @@
     },
     {
       "schemaVersion": 2,
-      "id": "sg",
+      "id": "serengeti_tz",
       "name": "Serengeti",
       "country": "Tanzania",
       "region": null,
@@ -249,7 +249,7 @@
     },
     {
       "schemaVersion": 2,
-      "id": "mf",
+      "id": "mount_fuji_jp",
       "name": "Mount Fuji",
       "country": "Japan",
       "region": null,
@@ -274,7 +274,7 @@
     },
     {
       "schemaVersion": 2,
-      "id": "tk",
+      "id": "tikal_gt",
       "name": "Tikal",
       "country": "Guatemala",
       "region": null,
@@ -298,7 +298,7 @@
     },
     {
       "schemaVersion": 2,
-      "id": "sm",
+      "id": "samarkand_uz",
       "name": "Samarkand",
       "country": "Uzbekistan",
       "region": null,
@@ -322,7 +322,7 @@
     },
     {
       "schemaVersion": 2,
-      "id": "es",
+      "id": "istanbul_tr",
       "name": "Istanbul",
       "country": "Turkey",
       "region": null,
@@ -347,7 +347,7 @@
     },
     {
       "schemaVersion": 2,
-      "id": "fz",
+      "id": "fez_ma",
       "name": "Fez",
       "country": "Morocco",
       "region": null,
@@ -372,7 +372,7 @@
     },
     {
       "schemaVersion": 2,
-      "id": "ky",
+      "id": "kyoto_jp",
       "name": "Kyoto",
       "country": "Japan",
       "region": null,
@@ -397,7 +397,7 @@
     },
     {
       "schemaVersion": 2,
-      "id": "mk",
+      "id": "mount_kailash_cn",
       "name": "Mount Kailash",
       "country": "Tibet",
       "region": null,
@@ -422,7 +422,7 @@
     },
     {
       "schemaVersion": 2,
-      "id": "rn",
+      "id": "rapa_nui_cl",
       "name": "Rapa Nui",
       "country": "Chile",
       "region": null,
@@ -447,7 +447,7 @@
     },
     {
       "schemaVersion": 2,
-      "id": "aw",
+      "id": "angkor_wat_kh",
       "name": "Angkor Wat",
       "country": "Cambodia",
       "region": null,
@@ -472,7 +472,7 @@
     },
     {
       "schemaVersion": 2,
-      "id": "us",
+      "id": "ushuaia_ar",
       "name": "Ushuaia",
       "country": "Argentina",
       "region": null,
@@ -497,7 +497,7 @@
     },
     {
       "schemaVersion": 2,
-      "id": "gp",
+      "id": "giza_plateau_eg",
       "name": "Giza Plateau",
       "country": "Egypt",
       "region": null,
@@ -520,7 +520,7 @@
     },
     {
       "schemaVersion": 2,
-      "id": "st",
+      "id": "stonehenge_gb",
       "name": "Stonehenge",
       "country": "UK",
       "region": null,
@@ -545,7 +545,7 @@
     },
     {
       "schemaVersion": 2,
-      "id": "ti",
+      "id": "tiwanaku_bo",
       "name": "Tiwanaku",
       "country": "Bolivia",
       "region": null,
@@ -571,7 +571,7 @@
     },
     {
       "schemaVersion": 2,
-      "id": "sgn",
+      "id": "sigiriya_lk",
       "name": "Sigiriya",
       "country": "Sri Lanka",
       "region": null,
@@ -596,7 +596,7 @@
     },
     {
       "schemaVersion": 2,
-      "id": "bm",
+      "id": "bermuda_triangle_vertex_xx",
       "name": "Bermuda Triangle Vertex",
       "country": "Atlantic",
       "region": null,
@@ -621,7 +621,7 @@
     },
     {
       "schemaVersion": 2,
-      "id": "ls",
+      "id": "lake_superior_us_ca",
       "name": "Lake Superior",
       "country": "USA/Canada",
       "region": null,
@@ -648,7 +648,7 @@
     },
     {
       "schemaVersion": 2,
-      "id": "cr",
+      "id": "cape_reinga_nz",
       "name": "Cape Reinga",
       "country": "New Zealand",
       "region": null,
@@ -674,7 +674,7 @@
     },
     {
       "schemaVersion": 2,
-      "id": "az",
+      "id": "azores_archipelago_pt",
       "name": "Azores Archipelago",
       "country": "Portugal",
       "region": null,
@@ -699,7 +699,7 @@
     },
     {
       "schemaVersion": 2,
-      "id": "sh",
+      "id": "mount_shasta_us",
       "name": "Mount Shasta",
       "country": "USA",
       "region": null,
@@ -723,7 +723,7 @@
     },
     {
       "schemaVersion": 2,
-      "id": "kr",
+      "id": "krakatoa_id",
       "name": "Krakatoa",
       "country": "Indonesia",
       "region": null,
@@ -748,7 +748,7 @@
     },
     {
       "schemaVersion": 2,
-      "id": "et",
+      "id": "mount_etna_it",
       "name": "Mount Etna",
       "country": "Italy",
       "region": null,
@@ -771,7 +771,7 @@
     },
     {
       "schemaVersion": 2,
-      "id": "ma",
+      "id": "mauna_kea_us",
       "name": "Mauna Kea",
       "country": "Hawaii",
       "region": null,
@@ -795,7 +795,7 @@
     },
     {
       "schemaVersion": 2,
-      "id": "gl",
+      "id": "glastonbury_tor_gb",
       "name": "Glastonbury Tor",
       "country": "UK",
       "region": null,
@@ -819,7 +819,7 @@
     },
     {
       "schemaVersion": 2,
-      "id": "jn",
+      "id": "jerusalem_il",
       "name": "Jerusalem",
       "country": "Israel",
       "region": null,
@@ -842,7 +842,7 @@
     },
     {
       "schemaVersion": 2,
-      "id": "ax",
+      "id": "axum_et",
       "name": "Axum",
       "country": "Ethiopia",
       "region": null,
@@ -866,7 +866,7 @@
     },
     {
       "schemaVersion": 2,
-      "id": "ch",
+      "id": "chichen_itza_mx",
       "name": "Chichén Itzá",
       "country": "Mexico",
       "region": null,
@@ -890,7 +890,7 @@
     },
     {
       "schemaVersion": 2,
-      "id": "shl",
+      "id": "shambhala_node_mn",
       "name": "Shambhala Node",
       "country": "Altai Mountains",
       "region": null,
@@ -914,7 +914,7 @@
     },
     {
       "schemaVersion": 2,
-      "id": "dl",
+      "id": "delphi_gr",
       "name": "Delphi",
       "country": "Greece",
       "region": null,
@@ -938,7 +938,7 @@
     },
     {
       "schemaVersion": 2,
-      "id": "lm",
+      "id": "lake_baikal_ru",
       "name": "Lake Baikal",
       "country": "Russia",
       "region": null,
@@ -962,7 +962,7 @@
     },
     {
       "schemaVersion": 2,
-      "id": "ts",
+      "id": "teotihuacan_mx",
       "name": "Teotihuacán",
       "country": "Mexico",
       "region": null,

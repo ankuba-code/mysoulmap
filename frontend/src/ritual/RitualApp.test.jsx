@@ -46,6 +46,64 @@ async function answerChoices(user, labels) {
 }
 
 describe("RitualApp", () => {
+  it("keeps the header to the wordmark and language switch and links the legal pages", () => {
+    render(
+      <MemoryRouter>
+        <RitualApp />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole("link", { name: "SoulMap" })).toHaveAttribute("href", "/");
+    expect(screen.getByRole("button", { name: "de" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("link", { name: "Impressum" })).toHaveAttribute("href", "/impressum");
+    expect(screen.getByRole("link", { name: "Nutzungsbedingungen" })).toHaveAttribute("href", "/disclaimer");
+    expect(screen.getByRole("link", { name: "Datenschutz" })).toHaveAttribute("href", "/datenschutz");
+    expect(screen.queryByRole("link", { name: "Reiseassistent" })).not.toBeInTheDocument();
+  });
+
+  it("translates the opening when the language changes", async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <RitualApp />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole("heading", { name: "Dein Atlas deiner Seelenorte" })).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "Sprache" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "en" }));
+    expect(screen.getByRole("heading", { name: "Your atlas of your soul places" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Begin the ritual" })).toBeInTheDocument();
+    expect(screen.getByText("Attunement")).toBeInTheDocument();
+    expect(screen.queryByText("Dein Atlas deiner Seelenorte")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "es" }));
+    expect(screen.getByRole("heading", { name: "Tu atlas de tus lugares del alma" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Comenzar el ritual" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Términos y condiciones" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "ru" }));
+    expect(screen.getByRole("heading", { name: "Твой атлас твоих мест души" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Начать ритуал" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Условия использования" })).toBeInTheDocument();
+    expect(screen.queryByText("Einstimmung")).not.toBeInTheDocument();
+  });
+
+  it("offers aether as an element", async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <RitualApp />
+      </MemoryRouter>,
+    );
+    await user.click(screen.getByRole("button", { name: "Ritual beginnen" }));
+    await answerChoices(user, [
+      "Stiller Berggipfel",
+      "Aufsteigen, hinauswachsen",
+      "Eine Sehnsucht ohne Namen",
+    ]);
+    expect(screen.getByRole("button", { name: /Äther/ })).toBeInTheDocument();
+  });
+
   it("walks the ritual and stores the match", async () => {
     postMatch.mockResolvedValue(MATCH);
     const user = userEvent.setup();

@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
 import { fetchStats, loginAdmin, logoutAdmin } from "./api";
 import AdminLogin from "./AdminLogin";
-import { FallbackPanel, OriginPanel, OverviewPanel, PlacesPanel, RawPanel } from "./AdminCharts";
+import { ChartPanel, FallbackPanel, LangfusePanel, MonthPanel, OriginPanel, OverviewPanel, PlacesPanel, RawPanel } from "./AdminCharts";
 
 const SECTIONS = [
   { id: "overview", label: "Übersicht" },
+  { id: "charts", label: "Grafiken" },
   { id: "origin", label: "Herkunft" },
   { id: "places", label: "Beliebte Orte" },
   { id: "fallback", label: "LLM-Ausfälle" },
+  { id: "month", label: "Monatsreport" },
   { id: "raw", label: "Rohdaten" },
 ];
 
@@ -93,13 +95,28 @@ export default function AdminApp() {
             <p className="text-sm uppercase tracking-wide text-stone-500">Soulmap Admin</p>
             <h1 className="text-2xl font-semibold">Statistik {stats.period}</h1>
           </div>
-          <button type="button" onClick={onLogout} className="rounded-lg bg-white px-3 py-2 text-sm ring-1 ring-stone-300">
-            Abmelden
-          </button>
+          <div className="flex items-center gap-3">
+            {typeof stats.langfuse_url === "string" && stats.langfuse_url.startsWith("https://") ? (
+              <a
+                href={stats.langfuse_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm underline"
+              >
+                Langfuse
+              </a>
+            ) : null}
+            <button type="button" onClick={onLogout} className="rounded-lg bg-white px-3 py-2 text-sm ring-1 ring-stone-300">
+              Abmelden
+            </button>
+          </div>
         </header>
         {error ? <p className="text-sm text-rose-700">{error}</p> : null}
         <nav className="flex flex-wrap gap-2">
-          {SECTIONS.map((item) => (
+          {(stats.langfuse
+            ? [SECTIONS[0], { id: "langfuse", label: "Langfuse" }, ...SECTIONS.slice(1)]
+            : SECTIONS
+          ).map((item) => (
             <button
               key={item.id}
               type="button"
@@ -113,9 +130,12 @@ export default function AdminApp() {
           ))}
         </nav>
         {section === "overview" ? <OverviewPanel stats={stats} /> : null}
+        {section === "langfuse" ? <LangfusePanel widgets={stats.langfuse} /> : null}
+        {section === "charts" ? <ChartPanel charts={stats.charts} /> : null}
         {section === "origin" ? <OriginPanel stats={stats} /> : null}
         {section === "places" ? <PlacesPanel stats={stats} /> : null}
         {section === "fallback" ? <FallbackPanel stats={stats} /> : null}
+        {section === "month" ? <MonthPanel report={stats.monthly_report} /> : null}
         {section === "raw" ? (
           <RawPanel events={rawEvents} onConfirm={onRawConfirm} confirmed={rawEvents !== null} busy={busy} />
         ) : null}

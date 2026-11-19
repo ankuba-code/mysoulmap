@@ -51,9 +51,18 @@ def fallback_place_ids(
     if not remaining:
         return []
 
-    user_text = " ".join(
-        message.content for message in request.messages if message.role == "user"
-    )
+    parts = [message.content for message in request.messages if message.role == "user"]
+    if request.ritual_context is not None:
+        context = request.ritual_context
+        parts.extend(
+            [
+                context.element,
+                context.inner_rhythm,
+                context.dominant_frequency,
+                *context.lines,
+            ]
+        )
+    user_text = " ".join(parts)
     user_tokens = tokenize(user_text)
     ranked = sorted(
         remaining,

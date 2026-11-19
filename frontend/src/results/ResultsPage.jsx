@@ -1,16 +1,18 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
+import AiNotice from "../components/AiNotice";
 import ChatApp from "../components/ChatApp";
 import RitualShell from "../components/RitualShell";
 import { goHref } from "../chat/goHref";
 import { copyFor } from "../chat/copy";
-import { exportPdf } from "../export/pdf";
+import { cardFromRitual, exportPdf } from "../export/pdf";
 import { exportScreenshot } from "../export/screenshot";
 import { pickCard } from "../ritual/card";
-import { ritualCopy } from "../ritual/copy";
+import { reasonText, ritualCopy, ritualLines, ritualWord } from "../ritual/copy";
 import { SymbolCluster, choiceIcons } from "../ritual/marks";
-import { clearRitual, loadRitual } from "../ritual/session";
+import { clearRitual, loadLanguage, loadRitual, saveLanguage, saveRitual } from "../ritual/session";
+import { loadGeo } from "./geo";
 import ResultsMap from "./ResultsMap";
 
 export default function ResultsPage() {
@@ -22,13 +24,16 @@ export default function ResultsPage() {
 }
 
 function ResultsBody({ stored }) {
-  const { language, result } = stored;
+  const { result } = stored;
+  const [language, setLanguage] = useState(() => loadLanguage() || stored.language || "de");
   const copy = ritualCopy(language);
   const booking = copyFor(language);
   const card = result.anima_card;
   const anima = pickCard(stored.answers, language);
   const icons = choiceIcons(stored.answers);
   const shareRef = useRef(null);
+  const [origin, setOrigin] = useState(null);
+  const [noticeOpen, setNoticeOpen] = useState(false);
   const [focusPlaceId, setFocusPlaceId] = useState(null);
   const [seedPrompt, setSeedPrompt] = useState("");
   const [extraPlaces, setExtraPlaces] = useState([]);
@@ -43,9 +48,28 @@ function ResultsBody({ stored }) {
       travel_direction: card.travel_direction,
       dominant_frequency: card.dominant_frequency,
       matched_place_ids: result.matches.map((place) => place.id),
+      lines: ritualLines(stored.answers, language),
     }),
-    [card, result.matches],
+    [card, language, result.matches, stored.answers],
   );
+
+  useEffect(() => {
+    let active = true;
+    loadGeo()
+      .then((value) => {
+        if (active) {
+          setOrigin(value);
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setNoticeOpen(true);
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const places = useMemo(() => {
     const byId = new Map(result.matches.map((place) => [place.id, place]));
@@ -97,13 +121,21 @@ function ResultsBody({ stored }) {
     (place) => place.coordinates && Number.isFinite(place.coordinates.lat) && Number.isFinite(place.coordinates.lng),
   );
 
+  function onLanguage(next) {
+    saveLanguage(next);
+    setLanguage(next);
+    const current = loadRitual();
+    if (current) {
+      saveRitual({ ...current, language: next });
+    }
+  }
+
   return (
-    <RitualShell language={language} assistantLabel={copy.assistantNav}>
+    <RitualShell language={language} onLanguage={onLanguage}>
       <div ref={shareRef} className="grid gap-10">
         <header className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
           <div>
-            <p className="text-sm tracking-wide text-white/70">Soulmaps</p>
-            <h1 className="mt-2 font-serif text-3xl font-light tracking-tight sm:text-4xl">{copy.resultsTitle}</h1>
+            <h1 className="font-serif text-3xl font-light tracking-tight sm:text-4xl">{copy.resultsTitle}</h1>
           </div>
           <div className="flex w-full flex-col items-stretch gap-2 sm:w-auto sm:items-end">
             <div className="grid grid-cols-2 gap-2 sm:flex">
@@ -121,11 +153,13 @@ function ResultsBody({ stored }) {
                     messages: [
                       {
                         role: "assistant",
-                        content: `${anima.name}. ${anima.desc}`,
+                        content: "",
                         recommendedPlaces: places,
                       },
                     ],
                     disclosure: copy.guestHint,
+                    card: cardFromRitual({ ...stored, language }),
+                    language,
                   })
                 }
                 className="rounded-full border border-white/40 px-4 py-2.5 text-center text-[13px] sm:py-2"
@@ -140,16 +174,16 @@ function ResultsBody({ stored }) {
         </header>
 
         <section className="border-b border-white/25 pb-8">
-          <p className="font-mono text-[10px] tracking-[0.18em] text-white/60 uppercase">Deine SoulMap</p>
+          <p className="font-mono text-[10px] tracking-[0.18em] text-white/60 uppercase">{copy.yourSoulmap}</p>
           <div className="mt-6 grid items-center gap-6 md:grid-cols-[220px_1fr]">
             <SymbolCluster icons={icons} size={200} />
             <div>
               <h2 className="font-serif text-[28px] font-light italic sm:text-[34px]">{anima.name}</h2>
               <p className="mt-2 text-[13px] italic leading-relaxed break-words text-white/70">
-                Element {card.element} · Innere Bewegung {card.inner_rhythm} · Intensität {card.emotional_intensity} · Frequenz {card.dominant_frequency}
+                {copy.element} {ritualWord(copy, card.element)} · {copy.innerMovement} {ritualWord(copy, card.inner_rhythm)} · {copy.intensity} {card.emotional_intensity} · {copy.frequency} {ritualWord(copy, card.dominant_frequency)}
               </p>
               <div className="mt-5 flex flex-wrap gap-2">
-                {[`Element: ${card.element}`, `Leitform: ${anima.symbol}`, `Dominante Frequenz: ${card.dominant_frequency}`].map((label) => (
+                {[`${copy.element}: ${ritualWord(copy, card.element)}`, `${copy.leadForm}: ${anima.symbol}`, `${copy.dominantFrequency}: ${ritualWord(copy, card.dominant_frequency)}`].map((label) => (
                   <span key={label} className="max-w-full rounded-full border border-white/35 px-3 py-1 font-mono text-[10px] break-words text-white/70">
                     {label}
                   </span>
@@ -159,8 +193,17 @@ function ResultsBody({ stored }) {
           </div>
         </section>
 
-        <section className="overflow-hidden rounded-2xl border border-white/30">
-          <ResultsMap places={mapped} focusPlaceId={focusPlaceId} />
+        <section id="karte" className="scroll-mt-4 overflow-hidden rounded-2xl border border-white/30">
+          <ResultsMap places={mapped} focusPlaceId={focusPlaceId} origin={origin} originLabel={copy.origin} />
+          {origin ? (
+            <p className="border-t border-white/15 px-4 py-2 text-[10px] leading-relaxed text-white/45">
+              {copy.origin}. This product includes GeoLite2 data created by{" "}
+              <a className="underline" href="https://www.maxmind.com">
+                MaxMind
+              </a>
+              , available from https://www.maxmind.com.
+            </p>
+          ) : null}
         </section>
 
         <section>
@@ -178,7 +221,10 @@ function ResultsBody({ stored }) {
                   <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
                     <button
                       type="button"
-                      onClick={() => setFocusPlaceId(place.id)}
+                      onClick={() => {
+                        setFocusPlaceId(place.id);
+                        document.getElementById("karte")?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+                      }}
                       className="rounded-full border border-white/40 px-3 py-2 text-center text-[12px] sm:px-4"
                     >
                       {copy.showTerrain}
@@ -186,8 +232,8 @@ function ResultsBody({ stored }) {
                     <button
                       type="button"
                       onClick={() => {
-                        setSeedPrompt(`${copy.promptPlaceDetails} Ort: ${place.name}.`);
-                        document.getElementById("reiseassistent")?.scrollIntoView({ behavior: "smooth" });
+                        setSeedPrompt(copy.promptOnePlace.replace("{name}", place.name));
+                        document.getElementById("reiseassistent")?.scrollIntoView?.({ behavior: "smooth" });
                       }}
                       className="rounded-full border border-white/40 px-3 py-2 text-center text-[12px] sm:px-4"
                     >
@@ -201,7 +247,7 @@ function ResultsBody({ stored }) {
                     <p className="font-mono text-[10px] tracking-[0.12em] text-white/50 uppercase">{copy.whyPlace}</p>
                     <ul className="mt-2 list-disc space-y-1 pl-5 text-[12px] italic text-white/70">
                       {place.reasons.slice(0, 3).map((reason) => (
-                        <li key={`${place.id}-${reason.dimension}`}>{reason.text}</li>
+                        <li key={`${place.id}-${reason.dimension}`}>{reasonText(copy, reason, place, card)}</li>
                       ))}
                     </ul>
                   </div>
@@ -224,10 +270,10 @@ function ResultsBody({ stored }) {
           <p className="font-mono text-[10px] tracking-[0.18em] text-white/60 uppercase">{copy.printTitle}</p>
           <p className="mt-2 max-w-[52ch] text-[13px] italic text-white/70">{copy.printLead}</p>
           <div className="mt-4 w-full max-w-sm bg-white p-3 text-stone-950 shadow-[0_8px_28px_rgb(0_0_0_/_0.25)]">
-            <p className="font-mono text-[8px] tracking-[0.16em] uppercase">Deine SoulMap</p>
+            <p className="font-mono text-[8px] tracking-[0.16em] uppercase">{copy.yourSoulmap}</p>
             <p className="font-serif text-lg italic">{anima.name}</p>
             <p className="mt-1 text-[11px] italic text-stone-600">
-              Ton: {anima.ton} · Impuls: {anima.impuls} · Archetyp: {anima.symbol}
+              {copy.ton}: {anima.ton} · {copy.impuls}: {anima.impuls} · {copy.archetype}: {anima.symbol}
             </p>
             <p className="mt-2 max-w-[36ch] text-[11px] italic leading-snug text-stone-700">“{anima.desc}”</p>
           </div>
@@ -252,7 +298,7 @@ function ResultsBody({ stored }) {
       </div>
 
       <section id="reiseassistent" className="mt-10 border-t border-white/25 pt-8">
-        <p className="font-mono text-[10px] tracking-[0.18em] text-white/60 uppercase">Atlas der Entsprechungen</p>
+        <p className="font-mono text-[10px] tracking-[0.18em] text-white/60 uppercase">{copy.atlasKicker}</p>
         <h2 className="mt-2 font-serif text-2xl font-light sm:text-3xl">{copy.assistantNav}</h2>
         <p className="mt-2 max-w-[62ch] text-[14px] italic text-white/70">{copy.chatLead}</p>
         <div className="mt-4 border-t border-white/20 pt-4">
@@ -273,6 +319,7 @@ function ResultsBody({ stored }) {
           />
         </div>
       </section>
+      {noticeOpen ? <AiNotice copy={copy} onClose={() => setNoticeOpen(false)} /> : null}
       <p className="mt-8 text-xs text-white/50">
         <Link to="/" onClick={() => clearRitual()} className="underline-offset-4 hover:underline">
           {copy.restart}

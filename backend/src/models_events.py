@@ -9,6 +9,7 @@ class EventType(str, enum.Enum):
     form_submission = "form_submission"
     result_view = "result_view"
     affiliate_click = "affiliate_click"
+    rate_limited = "rate_limited"
 
 
 class LlmStatus(str, enum.Enum):
@@ -32,7 +33,8 @@ class UsageEvent(SQLModel, table=True):
     occurred_at: datetime = Field(sa_column=Column(DateTime(timezone=False), nullable=False))
     ip_address: str = Field(max_length=45)
     country_code: str = Field(max_length=2)
-    place_id: str | None = Field(default=None, max_length=20)
+    os_language: str | None = Field(default=None, max_length=16)
+    place_id: str | None = Field(default=None, max_length=40)
     llm_latency_ms: int | None = None
     llm_input_tokens: int | None = None
     llm_output_tokens: int | None = None
@@ -41,3 +43,4 @@ class UsageEvent(SQLModel, table=True):
         sa_column=Column(Enum(LlmStatus), nullable=True),
     )
     error_code: str | None = Field(default=None, max_length=50)
+    user_prompt: str | None = Field(default=None, max_length=500)

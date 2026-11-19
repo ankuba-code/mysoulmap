@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { postChat } from "../chat/api";
+import { legalNav } from "../legal/copy";
 import { copyFor } from "../chat/copy";
 import {
   INITIAL_STATE,
@@ -9,12 +10,15 @@ import {
   buildRequest,
   canSend,
 } from "../chat/conversation";
-import { exportPdf } from "../export/pdf";
+import { cardFromRitual, exportPdf } from "../export/pdf";
+import { LANGUAGE_LABEL, loadRitual } from "../ritual/session";
 import { hasExportableResult } from "../export/results";
 import { exportScreenshot } from "../export/screenshot";
 import AiDisclosure from "./AiDisclosure";
 import ChatMessage from "./ChatMessage";
+import DotSpinner from "./DotSpinner";
 import ExportBar from "./ExportBar";
+import SharePanel from "./SharePanel";
 
 const LANGUAGES = [
   { id: "de", label: "Deutsch" },
@@ -42,17 +46,25 @@ export default function ChatApp({
   const [busy, setBusy] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState("");
+  const [tokenNotice, setTokenNotice] = useState(null);
   const [phase, setPhase] = useState(fromRitual && gatePrompts ? "gate" : "chat");
   const resultRef = useRef(null);
   const inflightRef = useRef(false);
   const seedRef = useRef("");
   const copy = copyFor(language);
-  const allowed = canSend(draft, state.messages.length) && !busy;
+
+  useEffect(() => {
+    if (embedded) {
+      setLanguage(initialLanguage);
+    }
+  }, [embedded, initialLanguage]);
+  const tokensSpent = tokenNotice === "exhausted";
+  const allowed = canSend(draft, state.messages.length) && !busy && !tokensSpent;
   const canExport = hasExportableResult(state.messages) && !busy && !exporting;
 
-  async function runTurn(text) {
+  async function runTurn(text, { placeFocus = false } = {}) {
     const content = text.trim();
-    if (!canSend(content, state.messages.length) || busy || inflightRef.current) {
+    if (!canSend(content, state.messages.length) || busy || inflightRef.current || tokenNotice === "exhausted") {
       return;
     }
     inflightRef.current = true;
@@ -63,13 +75,28 @@ export default function ChatApp({
       const response = await postChat(
         buildRequest(state, content, language, { fromRitual, ritualContext }),
       );
-      setState((current) => applyResponse(current, content, response));
+      setState((current) => {
+        const next = applyResponse(current, content, response);
+        if (!placeFocus) {
+          return next;
+        }
+        const messages = next.messages.map((message, index) =>
+          index === next.messages.length - 1 ? { ...message, suppressOverview: true } : message,
+        );
+        return { ...next, messages };
+      });
+      setTokenNotice(response.token_notice === "approaching" ? "approaching" : null);
       setDraft("");
       if (onRecommendedPlaces && response.recommended_places?.length) {
         onRecommendedPlaces(response.recommended_places);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : copy.sending);
+      if (err && err.code === "TOKEN_LIMIT") {
+        setTokenNotice("exhausted");
+        setError("");
+      } else {
+        setError(err instanceof Error ? err.message : copy.sending);
+      }
     } finally {
       inflightRef.current = false;
       setBusy(false);
@@ -81,7 +108,7 @@ export default function ChatApp({
       return;
     }
     seedRef.current = seedPrompt;
-    void runTurn(seedPrompt);
+    void runTurn(seedPrompt, { placeFocus: true });
     onSeedHandled?.();
   }, [seedPrompt]);
 
@@ -108,7 +135,9 @@ export default function ChatApp({
     try {
       exportPdf({
         messages: state.messages,
-        disclosure: state.aiDisclosure ? copy.disclosure : "",
+        disclosure: state.aiDisclosure ? copy.tagline : "",
+        card: cardFromRitual(loadRitual()),
+        language,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : copy.exportError);
@@ -123,7 +152,7 @@ export default function ChatApp({
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <button
             type="button"
-            disabled={busy}
+            disabled={busy || tokensSpent}
             onClick={() => void runTurn(gatePrompts.placeDetails)}
             className="rounded-full border border-white/40 px-4 py-2 text-sm text-white hover:bg-white/10 disabled:opacity-40"
           >
@@ -131,15 +160,16 @@ export default function ChatApp({
           </button>
           <button
             type="button"
-            disabled={busy}
+            disabled={busy || tokensSpent}
             onClick={() => void runTurn(gatePrompts.morePlaces)}
             className="rounded-full border border-white/40 px-4 py-2 text-sm text-white hover:bg-white/10 disabled:opacity-40"
           >
             {gatePrompts.ctaMorePlaces}
           </button>
         </div>
+        {tokenNotice ? <SharePanel copy={copy} /> : null}
         {error ? <p className="text-sm text-rose-200">{error}</p> : null}
-        {busy ? <p className="text-sm italic text-white/60">{copy.sending}</p> : null}
+        {busy ? <PendingTurn label={copy.sending} light /> : null}
       </div>
     );
   }
@@ -165,9 +195,10 @@ export default function ChatApp({
             copy={copy}
             language={language}
             ritual={embedded}
+            hideOverview={hideOverview(state.messages, index)}
           />
         ))}
-        {busy ? <p className="text-sm text-stone-500">{copy.sending}</p> : null}
+        {busy ? <PendingTurn label={copy.sending} light={embedded} /> : null}
       </section>
       <form
         onSubmit={onSubmit}
@@ -177,11 +208,21 @@ export default function ChatApp({
             : "sticky bottom-4 space-y-3 rounded-2xl bg-white p-3 ring-1 ring-stone-200"
         }
       >
+        {tokenNotice ? <SharePanel copy={copy} /> : null}
         {error ? <p className="text-sm text-rose-700">{error}</p> : null}
         {state.messages.length >= MAX_TURNS ? (
           <p className="text-sm text-stone-500">{copy.limit}</p>
         ) : null}
+        {embedded && gatePrompts?.placeDetails ? (
+          <p
+            id="place-details-hint"
+            className="rounded-xl border border-white/25 bg-black/25 px-3 py-2 text-[12px] italic leading-relaxed text-white/75"
+          >
+            {gatePrompts.placeDetails}
+          </p>
+        ) : null}
         <textarea
+          aria-describedby={embedded && gatePrompts?.placeDetails ? "place-details-hint" : undefined}
           value={draft}
           onChange={(event) => setDraft(event.target.value.slice(0, MAX_MESSAGE_LENGTH))}
           rows={3}
@@ -192,14 +233,14 @@ export default function ChatApp({
               ? "w-full resize-none rounded-2xl border border-white/35 bg-transparent px-3 py-2 text-white outline-none placeholder:text-white/45"
               : "w-full resize-none rounded-xl bg-stone-50 px-3 py-2 text-stone-900 outline-none ring-1 ring-stone-200 focus:ring-stone-400"
           }
-          disabled={busy || state.messages.length >= MAX_TURNS}
+          disabled={busy || tokensSpent || state.messages.length >= MAX_TURNS}
         />
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
           {embedded ? (
             <span className="text-xs uppercase tracking-wide text-stone-500">{language.toUpperCase()}</span>
           ) : (
             <label className="text-sm text-stone-600">
-              <span className="sr-only">Sprache</span>
+              <span className="sr-only">{LANGUAGE_LABEL[language] || LANGUAGE_LABEL.de}</span>
               <select
                 value={language}
                 onChange={(event) => setLanguage(event.target.value)}
@@ -235,15 +276,34 @@ export default function ChatApp({
         </div>
       </form>
       {embedded ? null : (
-        <footer className="flex gap-4 text-sm text-stone-500">
-          <a href="/impressum" className="underline">
-            Impressum
-          </a>
-          <a href="/datenschutz" className="underline">
-            Datenschutz
-          </a>
+        <footer className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-stone-500">
+          {legalNav(language).map((item) => (
+            <a key={item.to} href={item.to} className="underline">
+              {item.label}
+            </a>
+          ))}
         </footer>
       )}
     </main>
+  );
+}
+
+function hideOverview(messages, index) {
+  const message = messages[index];
+  if (message?.suppressOverview) {
+    return true;
+  }
+  if (message?.role !== "assistant" || !message.sections?.some((section) => section.kind === "overview")) {
+    return false;
+  }
+  return messages.slice(0, index).some((earlier) => earlier.role === "assistant" && !earlier.suppressOverview && earlier.sections?.some((section) => section.kind === "overview"));
+}
+
+function PendingTurn({ label, light = false }) {
+  return (
+    <div className="flex items-center gap-3" role="status">
+      <DotSpinner />
+      <p className={light ? "text-sm italic text-white/70" : "text-sm text-stone-500"}>{label}</p>
+    </div>
   );
 }

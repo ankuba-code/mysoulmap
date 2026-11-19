@@ -1,11 +1,12 @@
 import { useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import DotSpinner from "../components/DotSpinner";
 import RitualShell from "../components/RitualShell";
 import { postMatch } from "./api";
 import { pickCard } from "./card";
 import { QUESTION_IDS, ritualCopy } from "./copy";
 import { Mark, SymbolCluster, choiceIcons, iconFor, phaseFor, progressDots } from "./marks";
-import { loadRitual, saveRitual } from "./session";
+import { loadLanguage, loadRitual, saveLanguage, saveRitual } from "./session";
 
 const TEXT_MIN = { q6: 1, q7: 2 };
 const MIN_STEP_MS = import.meta.env.MODE === "test" ? 0 : 600;
@@ -14,7 +15,7 @@ export default function RitualApp() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const stored = loadRitual();
-  const [language, setLanguage] = useState(stored?.language || "de");
+  const [language, setLanguage] = useState(() => loadLanguage() || stored?.language || "de");
   const [step, setStep] = useState(searchParams.get("card") === "1" && stored ? "card" : "intro");
   const [answers, setAnswers] = useState(stored?.answers || {});
   const [error, setError] = useState("");
@@ -97,6 +98,7 @@ export default function RitualApp() {
     setStep("evaluating");
     try {
       const result = await postMatch({ answers, language });
+      saveLanguage(language);
       saveRitual({ language, answers, result });
       navigate("/results");
     } catch (err) {
@@ -111,11 +113,15 @@ export default function RitualApp() {
   const nextEnabled = step === "intro" || step === "card" || canAdvance();
   const hint = step === "q6" || step === "q7" ? copy.minChars : copy.pickChoice;
 
+  function onLanguage(next) {
+    saveLanguage(next);
+    setLanguage(next);
+  }
+
   return (
-    <RitualShell language={language} onLanguage={setLanguage} assistantLabel={copy.assistantNav}>
+    <RitualShell language={language} onLanguage={onLanguage}>
       <header className="mb-6 sm:mb-8">
-        <p className="text-sm tracking-wide text-white/75">Soulmaps</p>
-        <h1 className="mt-2 font-serif text-3xl font-light tracking-tight text-white sm:text-4xl">{copy.headline}</h1>
+        <h1 className="font-serif text-3xl font-light tracking-tight text-white sm:text-4xl">{copy.headline}</h1>
         <p className="mt-3 max-w-[60ch] text-[15px] leading-relaxed text-white/75">{copy.lead}</p>
         <p className="mt-3 max-w-[60ch] text-[13px] italic text-white/65">{copy.guestHint}</p>
       </header>
@@ -153,9 +159,12 @@ export default function RitualApp() {
         ) : null}
         {step === "card" ? <CardStep copy={copy} card={card} icons={choiceIcons(answers)} error={error} /> : null}
         {step === "evaluating" ? (
-          <section className="min-h-48 py-8 sm:min-h-80" aria-live="polite">
-            <h2 className="font-serif text-2xl font-light italic sm:text-3xl">{copy.evaluating}</h2>
-            <p className="mt-3 text-[15px] italic text-white/70">{copy.evaluatingLead}</p>
+          <section className="flex min-h-48 items-center gap-4 py-8 sm:min-h-80" aria-live="polite">
+            <DotSpinner />
+            <div>
+              <h2 className="font-serif text-2xl font-light italic sm:text-3xl">{copy.evaluating}</h2>
+              <p className="mt-3 text-[15px] italic text-white/70">{copy.evaluatingLead}</p>
+            </div>
           </section>
         ) : null}
 
@@ -190,7 +199,7 @@ export default function RitualApp() {
         ) : null}
       </div>
 
-      <footer className="mt-10 text-xs text-white/60">{copy.footer}</footer>
+      <p className="mt-10 text-xs text-white/60">{copy.footer}</p>
     </RitualShell>
   );
 }
@@ -204,7 +213,7 @@ function Intro({ copy }) {
         <circle cx="40" cy="40" r="8" fill="none" stroke="currentColor" strokeWidth="0.7" />
         <path d="M40 6 V74 M6 40 H74 M16 16 L64 64 M64 16 L16 64" fill="none" stroke="currentColor" strokeWidth="0.6" />
       </svg>
-      <h2 className="mt-6 font-serif text-3xl font-light italic sm:text-4xl">Soulmaps</h2>
+      <h2 className="mt-6 font-serif text-3xl font-light italic sm:text-4xl">SoulMap</h2>
       <p className="mt-2 text-[15px] italic text-white/75">{copy.introSubtitle}</p>
       <p className="mx-auto mt-8 max-w-[32ch] text-[13px] leading-relaxed text-white/70">{copy.introBody}</p>
     </section>
@@ -265,7 +274,7 @@ function CardStep({ copy, card, icons, error }) {
     <section className="min-h-60 py-4 text-center sm:min-h-[420px]">
       <p className="font-mono text-[10px] tracking-[0.16em] text-white/60 uppercase">{copy.cardKicker}</p>
       <div className="mx-auto mt-5 w-full max-w-xs rounded-[28px] border border-white/35 px-4 py-6">
-        <p className="font-mono text-[9px] tracking-[0.16em] text-white/50 uppercase">Anima-Karte</p>
+        <p className="font-mono text-[9px] tracking-[0.16em] text-white/50 uppercase">{copy.animaKicker}</p>
         <SymbolCluster icons={icons} />
         <p className="mt-2 font-mono text-[9px] tracking-[0.16em] text-white/45 uppercase">
           {icons.length} {copy.symbolsFused}
@@ -273,7 +282,7 @@ function CardStep({ copy, card, icons, error }) {
       </div>
       <h2 className="mt-6 font-serif text-2xl font-light italic sm:text-[28px]">{card.name}</h2>
       <div className="mt-4 flex flex-wrap justify-center gap-2">
-        {[`Ton: ${card.ton}`, `Impuls: ${card.impuls}`, `Archetyp: ${card.symbol}`].map((label) => (
+        {[`${copy.ton}: ${card.ton}`, `${copy.impuls}: ${card.impuls}`, `${copy.archetype}: ${card.symbol}`].map((label) => (
           <span key={label} className="rounded-full border border-white/35 px-3 py-1 font-mono text-[10px] tracking-[0.08em] text-white/70">
             {label}
           </span>

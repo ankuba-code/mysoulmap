@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import os
+import secrets
 import time
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
@@ -26,13 +27,25 @@ from .admin_auth import (
     is_admin_session,
     verify_admin,
 )
+from .admin_charts import attach_charts
 from .admin_pages import login_page, stats_page
 from .atlas import PLACES, Place, filter_places, get_place_by_id
-from .chat import run_chat
-from .db import get_database_url, get_engine, init_db
+from .budget import attach_budget_signal, estimate_chat_tokens, get_book
+from .chat import fallback_response, run_chat
+from .llm import flush_langfuse, langfuse_project_url
+from .langfuse_metrics import fetch_langfuse_widgets
+from .db import database_ok, get_database_url, get_engine, init_db
 from .booking import booking_search_url
-from .events import log_affiliate_click, log_chat_events, log_match_events
-from .match import MatchRequest, MatchResponse, match_places
+from .events import (
+    client_ip,
+    log_affiliate_click,
+    log_chat_events,
+    log_match_events,
+    log_rate_limited,
+)
+from .geocode import locate_text
+from .geoip import lookup_ip
+from .match import MatchRequest, MatchResponse, match_places, q7_lookup_query
 from .logging_config import ACCESS_LOGGER, configure_logging
 from .models_chat import ChatRequest, ChatResponse
 from .models_events import UsageEvent  # noqa: F401
@@ -41,12 +54,14 @@ from .rate_limit import (
     LIMIT_ADMIN_LOGIN,
     LIMIT_ADMIN_STATS,
     LIMIT_CHAT,
+    LIMIT_GEO,
     LIMIT_GO,
     LIMIT_MATCH,
     atlas_limit,
     limiter,
 )
-from .stats import aggregate_stats, default_period
+from .stats import aggregate_stats, chat_window, default_period, had_recent_llm_success
+from .token_limit import token_limit_reached, token_notice_for, tokens_used
 
 configure_logging()
 access_log = logging.getLogger(ACCESS_LOGGER)
@@ -59,6 +74,7 @@ async def lifespan(_app: FastAPI):
     if not get_database_url().startswith("sqlite"):
         task = asyncio.create_task(_purge_loop())
     yield
+    flush_langfuse()
     if task is not None:
         task.cancel()
 
@@ -126,6 +142,7 @@ async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
         "rate_limited",
         extra={"method": request.method, "path": request.url.path, "status": 429},
     )
+    log_rate_limited(request)
     return JSONResponse(
         status_code=429,
         headers={"Retry-After": str(int(retry_after))},
@@ -154,7 +171,42 @@ async def log_request(request: Request, call_next):
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "places_loaded": len(PLACES)}
+    db_ok = database_ok()
+    places = len(PLACES)
+    ok = db_ok and places > 0
+    payload = {
+        "status": "ok" if ok else "degraded",
+        "places_loaded": places,
+        "database": "ok" if db_ok else "down",
+    }
+    if ok:
+        return payload
+    return JSONResponse(status_code=503, content=payload)
+
+
+@app.get("/health/signals")
+def health_signals(request: Request):
+    expected = os.getenv("MONITOR_TOKEN", "")
+    provided = request.headers.get("x-monitor-token", "")
+    if not expected:
+        return JSONResponse(
+            status_code=503,
+            content=error_payload("MONITOR_NOT_CONFIGURED", "MONITOR_TOKEN fehlt."),
+        )
+    if not provided or not secrets.compare_digest(provided, expected):
+        return JSONResponse(
+            status_code=401,
+            content=error_payload("UNAUTHORIZED", "Monitoring-Token ungültig."),
+        )
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    with Session(get_engine()) as session:
+        return attach_budget_signal(chat_window(session, now), now)
+
+
+@app.get("/geo")
+@limiter.limit(LIMIT_GEO)
+def geo(request: Request) -> dict[str, str | float | int | None]:
+    return lookup_ip(client_ip(request))
 
 
 @app.get("/atlas/places")
@@ -211,7 +263,9 @@ def go_place(request: Request, place_id: str, lang: str | None = Query(default=N
 @app.post("/match", response_model=MatchResponse)
 @limiter.limit(LIMIT_MATCH)
 def match(request: Request, body: MatchRequest) -> MatchResponse:
-    response = match_places(PLACES, body)
+    query = q7_lookup_query(body.answers.q7, PLACES)
+    located = locate_text(query, language=body.language) if query else None
+    response = match_places(PLACES, body, located=located)
     log_match_events(request)
     return response
 
@@ -219,7 +273,43 @@ def match(request: Request, body: MatchRequest) -> MatchResponse:
 @app.post("/chat", response_model=ChatResponse)
 @limiter.limit(LIMIT_CHAT)
 async def chat(request: Request, body: ChatRequest) -> ChatResponse:
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    ip_address = client_ip(request)
+    with Session(get_engine()) as session:
+        used = tokens_used(session, ip_address, now)
+    if token_limit_reached(used):
+        return JSONResponse(
+            status_code=429,
+            content=error_payload(
+                "TOKEN_LIMIT",
+                "Deine Tokens für SoulMap sind aufgebraucht.",
+            ),
+        )
+    with Session(get_engine()) as session:
+        recent_user = had_recent_llm_success(session, ip_address, now)
+    reservation = get_book().try_reserve(
+        ip=ip_address,
+        tokens=estimate_chat_tokens(body),
+        now=now,
+        recent_user=recent_user,
+    )
+    if not reservation.ok:
+        response = fallback_response(body, PLACES)
+        log_chat_events(
+            request,
+            body,
+            response,
+            error_code=reservation.code,
+            latency_ms=0,
+            input_tokens=None,
+            output_tokens=None,
+        )
+        return response
     response, trace = await run_chat(body, PLACES)
+    actual = reservation.reserved
+    if trace.input_tokens is not None or trace.output_tokens is not None:
+        actual = (trace.input_tokens or 0) + (trace.output_tokens or 0)
+    get_book().adjust(reservation, actual)
     log_chat_events(
         request,
         body,
@@ -229,7 +319,21 @@ async def chat(request: Request, body: ChatRequest) -> ChatResponse:
         input_tokens=trace.input_tokens,
         output_tokens=trace.output_tokens,
     )
+    added = 0
+    if response.source == "llm":
+        added = (trace.input_tokens or 0) + (trace.output_tokens or 0)
+    response.token_notice = token_notice_for(used + added)
     return response
+
+
+def _with_langfuse(payload: dict) -> dict:
+    url = langfuse_project_url()
+    if url:
+        payload["langfuse_url"] = url
+    widgets = fetch_langfuse_widgets(datetime.now(timezone.utc))
+    if widgets is not None:
+        payload["langfuse"] = widgets
+    return payload
 
 
 def _is_form_request(request: Request) -> bool:
@@ -269,7 +373,8 @@ def admin_page(request: Request, raw: bool = False):
     if request.url.path == "/admin" and is_admin_session(request.cookies.get(COOKIE_NAME)):
         start, end = default_period(datetime.now(timezone.utc).replace(tzinfo=None))
         with Session(get_engine()) as session:
-            return HTMLResponse(stats_page(aggregate_stats(session, start, end, raw=raw)))
+            payload = _with_langfuse(attach_charts(aggregate_stats(session, start, end, raw=raw)))
+            return HTMLResponse(stats_page(payload))
     return HTMLResponse(login_page())
 
 
@@ -334,4 +439,4 @@ def admin_stats(
         )
     start, end = default_period(datetime.now(timezone.utc).replace(tzinfo=None))
     with Session(get_engine()) as session:
-        return aggregate_stats(session, start, end, raw=raw)
+        return _with_langfuse(attach_charts(aggregate_stats(session, start, end, raw=raw)))

@@ -13,15 +13,15 @@ Das Frontend SHALL beim ersten erfolgreichen Chat einer Sitzung einen gut sichtb
 - **WHEN** die erste Chat-Antwort eintrifft und `ai_disclosure` wahr ist
 - **THEN** zeigt die Oberfläche den KI-Hinweis sichtbar über dem Gespräch
 
-### Requirement: Keine Konversationsspeicherung
-Das System MUST NOT Konversationstext, Nutzerkonten oder ein Endnutzer-Login speichern. Die Übermittlung an OpenAI SHALL auf den zur Antwort nötigen Verlauf begrenzt sein.
+### Requirement: Begrenzte Prompt-Speicherung
+Das System MUST NOT Nutzerkonten oder ein Endnutzer-Login speichern. Der vollständige Verlauf bleibt beim Client. Die Übermittlung an OpenAI SHALL auf den zur Antwort nötigen Verlauf begrenzt sein. In `usage_events` SHALL beim `result_view` nur die letzte Nutzernachricht stehen, gekürzt auf 500 Zeichen. Assistentenantworten und der übrige Verlauf MUST NOT gespeichert werden.
 
 #### Scenario: Chat-Anfrage
 - **WHEN** eine Chat-Anfrage verarbeitet wird
-- **THEN** wird der Nachrichtentext nicht in MySQL geschrieben
+- **THEN** schreibt MySQL höchstens die gekürzte letzte Nutzernachricht und nicht den vollständigen Verlauf
 
 ### Requirement: Statistik als berechtigtes Interesse
-IP-Adresse und Ländercode in `usage_events` SHALL nur für Betrieb, Missbrauchsschutz und technisches Monitoring verwendet werden. Die Speicherung SHALL nach 6 Monaten enden. Eine Datenschutzerklärung SHALL Zweck, Rechtsgrundlage, Dauer, das Fehlen weiterer Konversationsdaten und die Weitergabe an OpenAI sowie Booking.com beim Affiliate-Klick benennen.
+IP-Adresse, Ländercode und der gekürzte Prompt-Auszug in `usage_events` SHALL nur für Betrieb, Missbrauchsschutz, das Token-Limit und den internen Monatsreport verwendet werden. Die Speicherung SHALL nach 6 Monaten enden. Eine Datenschutzerklärung SHALL Zweck, Rechtsgrundlage, Dauer, diese begrenzte Speicherung und die Weitergabe an OpenAI sowie Booking.com beim Affiliate-Klick benennen.
 
 #### Scenario: Ablauf der Frist
 - **WHEN** ein Ereignis älter als 6 Monate ist

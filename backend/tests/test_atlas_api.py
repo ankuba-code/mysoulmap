@@ -40,13 +40,13 @@ def test_list_places_filters() -> None:
     by_keyword = client.get("/atlas/places", params={"keyword": "height"})
     assert by_keyword.status_code == 200
     ids = [place["id"] for place in by_keyword.json()["places"]]
-    assert ids == ["mp"]
+    assert ids == ["machu_picchu_pe"]
 
 
 def test_get_place_by_id() -> None:
-    response = client.get("/atlas/places/mp")
+    response = client.get("/atlas/places/machu_picchu_pe")
     assert response.status_code == 200
-    assert response.json()["id"] == "mp"
+    assert response.json()["id"] == "machu_picchu_pe"
     assert response.json()["name"] == "Machu Picchu"
 
 

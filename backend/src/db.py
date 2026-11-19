@@ -1,8 +1,10 @@
+import logging
 import os
 from collections.abc import Iterator
 from pathlib import Path
 from urllib.parse import quote_plus
 
+from sqlalchemy import text
 from sqlmodel import Session, SQLModel, create_engine
 
 _engine = None
@@ -46,6 +48,16 @@ def reset_engine() -> None:
 def get_session() -> Iterator[Session]:
     with Session(get_engine()) as session:
         yield session
+
+
+def database_ok() -> bool:
+    try:
+        with Session(get_engine()) as session:
+            session.execute(text("SELECT 1"))
+        return True
+    except Exception as exc:
+        logging.getLogger("soulmap.health").error("database_ping_failed %s", type(exc).__name__)
+        return False
 
 
 def init_db() -> None:

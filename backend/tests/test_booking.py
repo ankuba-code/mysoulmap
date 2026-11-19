@@ -6,7 +6,7 @@ from src.booking import booking_search_url, normalize_booking_lang
 
 def test_booking_url_uses_aid_ss_and_label(monkeypatch) -> None:
     monkeypatch.setenv("BOOKING_AFFILIATE_ID", "123456")
-    place = get_place_by_id(PLACES, "mp")
+    place = get_place_by_id(PLACES, "machu_picchu_pe")
     assert place is not None
     parsed = urlparse(booking_search_url(place, "de"))
     assert parsed.scheme == "https"

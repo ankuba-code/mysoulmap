@@ -6,7 +6,16 @@ from typing import Literal
 from .atlas import Place
 from .fallback import fallback_message, fallback_place_ids
 from .llm import LlmCallError, complete_llm, pop_llm_usage
-from .models_chat import ChatMessage, ChatRequest, ChatResponse, LlmOutput, RecommendedPlace
+from .models_chat import (
+    MAX_MESSAGE_LENGTH,
+    ChatMessage,
+    ChatRequest,
+    ChatResponse,
+    ChatSection,
+    LlmOutput,
+    PlaceNote,
+    RecommendedPlace,
+)
 from .prompts import build_system_prompt
 
 LlmComplete = Callable[..., Awaitable[LlmOutput]]
@@ -38,6 +47,55 @@ def place_ids_in_scope(place_ids: list[str], places: list[Place]) -> bool:
     return all(place_id in known for place_id in place_ids)
 
 
+def place_notes_in_scope(notes: list[PlaceNote], places: list[Place]) -> bool:
+    known = {place.id for place in places}
+    return all(note.place_id in known for note in notes)
+
+
+def build_sections(
+    *,
+    overview: str,
+    place_notes: list[PlaceNote],
+    places: list[Place],
+) -> list[ChatSection]:
+    by_id = {place.id: place for place in places}
+    sections: list[ChatSection] = []
+    shared = clip_message(overview)
+    if shared:
+        sections.append(ChatSection(kind="overview", text=shared))
+    seen: set[str] = set()
+    for note in place_notes:
+        if note.place_id in seen or note.place_id not in by_id:
+            continue
+        seen.add(note.place_id)
+        place = by_id[note.place_id]
+        sections.append(
+            ChatSection(
+                kind="place",
+                text=clip_message(note.text),
+                place_id=place.id,
+                name=place.name,
+                country=place.country,
+                primaervibration=place.primaervibration,
+            )
+        )
+    return sections
+
+
+def clip_message(content: str) -> str:
+    text = content.strip()
+    if len(text) <= MAX_MESSAGE_LENGTH:
+        return text
+    limit = MAX_MESSAGE_LENGTH - 1
+    clipped = text[:limit]
+    if " " in clipped:
+        clipped = clipped.rsplit(" ", 1)[0]
+    clipped = clipped.rstrip(" ,;:-")
+    if not clipped:
+        clipped = text[:limit]
+    return f"{clipped}…"
+
+
 def build_chat_response(
     *,
     content: str,
@@ -45,6 +103,8 @@ def build_chat_response(
     shown_place_ids: list[str],
     places: list[Place],
     source: ChatSource,
+    overview: str = "",
+    place_notes: list[PlaceNote] | None = None,
 ) -> ChatResponse:
     by_id = {place.id: place for place in places}
     already = set(shown_place_ids)
@@ -69,9 +129,14 @@ def build_chat_response(
         for place_id in new_ids
     ]
     return ChatResponse(
-        message=ChatMessage(role="assistant", content=content),
+        message=ChatMessage(role="assistant", content=clip_message(content)),
         shown_place_ids=[*shown_place_ids, *new_ids],
         recommended_places=recommended,
+        sections=build_sections(
+            overview=overview,
+            place_notes=place_notes or [],
+            places=places,
+        ),
         source=source,
         ai_disclosure=True,
     )
@@ -111,7 +176,9 @@ async def _llm_turn(
         if exc.code == "LLM_RESPONSE_INVALID":
             return None
         raise
-    if not place_ids_in_scope(output.place_ids, places):
+    if not place_ids_in_scope(output.place_ids, places) or not place_notes_in_scope(
+        output.place_notes, places
+    ):
         return None
     return output
 
@@ -152,6 +219,8 @@ async def run_chat(
             shown_place_ids=request.shown_place_ids,
             places=places,
             source="llm",
+            overview=output.overview,
+            place_notes=output.place_notes,
         ),
         ChatTrace(
             source="llm",

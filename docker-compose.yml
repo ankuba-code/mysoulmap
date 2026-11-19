@@ -5,6 +5,10 @@ services:
       - "8000:8000"
     environment:
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-}
+      LANGFUSE_BASE_URL: ${LANGFUSE_BASE_URL:-https://cloud.langfuse.com}
+      LANGFUSE_PROJECT_URL: ${LANGFUSE_PROJECT_URL:-}
       BOOKING_AFFILIATE_ID: ${BOOKING_AFFILIATE_ID:-}
       MYSQL_HOST: db
       MYSQL_USER: ${MYSQL_USER:-soulmap}
@@ -12,9 +16,17 @@ services:
       MYSQL_DATABASE: ${MYSQL_DATABASE:-soulmap}
       ADMIN_PASSWORD_HASH: ${ADMIN_PASSWORD_HASH:-}
       ADMIN_SESSION_SECRET: ${ADMIN_SESSION_SECRET:-}
-      GEOIP_DB_PATH: ${GEOIP_DB_PATH:-}
+      GEOIP_DB_PATH: ${GEOIP_DB_PATH:-/app/data/GeoLite2-Country.mmdb}
+      GEOIP_CITY_DB_PATH: ${GEOIP_CITY_DB_PATH:-/app/data/GeoLite2-City.mmdb}
+      MONITOR_TOKEN: ${MONITOR_TOKEN:-}
+      REDIS_URL: redis://redis:6379/0
+      GLOBAL_DAILY_TOKEN_LIMIT: ${GLOBAL_DAILY_TOKEN_LIMIT:-500000}
+      GLOBAL_HOURLY_TOKEN_LIMIT: ${GLOBAL_HOURLY_TOKEN_LIMIT:-}
+      GLOBAL_LLM_CALLS_PER_MINUTE: ${GLOBAL_LLM_CALLS_PER_MINUTE:-30}
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - application_internal
@@ -39,17 +51,51 @@ services:
     volumes:
       - db_data:/var/lib/mysql
 
+  watchdog:
+    build: ./backend
+    command: ["python", "-m", "src.watchdog"]
+    environment:
+      ALERT_EMAIL: ${ALERT_EMAIL:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+      MONITOR_TOKEN: ${MONITOR_TOKEN:-}
+      HEALTH_URL: http://api:8000/health
+      SIGNALS_URL: http://api:8000/health/signals
+      WEB_URL: http://web/
+    depends_on:
+      - api
+      - web
+    networks:
+      - application_internal
+    restart: unless-stopped
+    healthcheck:
+      disable: true
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    networks:
+      - application_internal
+
   web:
-    image: nginx:alpine
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
     ports:
       - "8080:80"
     depends_on:
       - api
     networks:
       - application_internal
-    volumes:
-      - ./frontend/dist:/usr/share/nginx/html:ro
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
     restart: unless-stopped
 
 networks:
