@@ -1,0 +1,486 @@
+{
+  "es": {
+    "machu_picchu_pe": {
+      "name": "Machu Picchu",
+      "country": "Perú",
+      "vibration": "Montaña sagrada",
+      "correspondence": "Montaña sagrada · Guardián · Altura / memoria"
+    },
+    "uluru_au": {
+      "name": "Uluru",
+      "country": "Australia",
+      "vibration": "Roca primordial",
+      "correspondence": "Roca primordial · Ancestro · Origen / centro"
+    },
+    "petra_jo": {
+      "name": "Petra",
+      "country": "Jordania",
+      "vibration": "Ciudad tallada",
+      "correspondence": "Ciudad tallada · Arquitecto del desierto · Piedra / historia"
+    },
+    "banff_ca": {
+      "name": "Banff",
+      "country": "Canadá",
+      "vibration": "Pureza glacial",
+      "correspondence": "Pureza glacial · Guardián del norte · Hielo / claridad"
+    },
+    "varanasi_in": {
+      "name": "Varanasi",
+      "country": "India",
+      "vibration": "Tránsito",
+      "correspondence": "Tránsito · Umbral · Vida / muerte"
+    },
+    "ganges_river_in": {
+      "name": "Río Ganges",
+      "country": "India",
+      "vibration": "Agua sagrada",
+      "correspondence": "Agua sagrada · Madre · Purificación"
+    },
+    "mont_saint_michel_fr": {
+      "name": "Monte Saint-Michel",
+      "country": "Francia",
+      "vibration": "Agua que asciende",
+      "correspondence": "Agua que asciende · Monje · Marea / ascenso"
+    },
+    "salar_de_uyuni_bo": {
+      "name": "Salar de Uyuni",
+      "country": "Bolivia",
+      "vibration": "Espejo del cielo",
+      "correspondence": "Espejo del cielo · Reflejo · Cielo / tierra"
+    },
+    "reykjavik_is": {
+      "name": "Reikiavik",
+      "country": "Islandia",
+      "vibration": "Fuego y hielo",
+      "correspondence": "Fuego y hielo · Alquimista · Contraste / transformación"
+    },
+    "serengeti_tz": {
+      "name": "Serengueti",
+      "country": "Tanzania",
+      "vibration": "Pulso cíclico",
+      "correspondence": "Pulso cíclico · Animal sagrado · Ritmo / vida"
+    },
+    "mount_fuji_jp": {
+      "name": "Monte Fuji",
+      "country": "Japón",
+      "vibration": "Pureza",
+      "correspondence": "Pureza · El renacido · Forma / renovación"
+    },
+    "tikal_gt": {
+      "name": "Tikal",
+      "country": "Guatemala",
+      "vibration": "Tiempo profundo",
+      "correspondence": "Tiempo profundo · Cronista · Selva / tiempo"
+    },
+    "samarkand_uz": {
+      "name": "Samarcanda",
+      "country": "Uzbekistán",
+      "vibration": "Encrucijada",
+      "correspondence": "Encrucijada · Tejedor · Rutas / historias"
+    },
+    "istanbul_tr": {
+      "name": "Estambul",
+      "country": "Turquía",
+      "vibration": "Puente de mundos",
+      "correspondence": "Puente de mundos · Mediador · Este / oeste"
+    },
+    "fez_ma": {
+      "name": "Fez",
+      "country": "Marruecos",
+      "vibration": "Laberinto vivo",
+      "correspondence": "Laberinto vivo · Artesano · Callejones / oficios"
+    },
+    "kyoto_jp": {
+      "name": "Kioto",
+      "country": "Japón",
+      "vibration": "Templo vivo",
+      "correspondence": "Templo vivo · Custodio · Tradición / silencio"
+    },
+    "mount_kailash_cn": {
+      "name": "Monte Kailash",
+      "country": "Tíbet",
+      "vibration": "Eje del mundo",
+      "correspondence": "Eje del mundo · Peregrino · Centro / sagrado"
+    },
+    "rapa_nui_cl": {
+      "name": "Rapa Nui",
+      "country": "Chile",
+      "vibration": "Memoria ancestral",
+      "correspondence": "Memoria ancestral · Testigo · Ancestros / piedra"
+    },
+    "angkor_wat_kh": {
+      "name": "Angkor Wat",
+      "country": "Camboya",
+      "vibration": "Geometría sagrada",
+      "correspondence": "Geometría sagrada · Constructor · Luz / piedra"
+    },
+    "ushuaia_ar": {
+      "name": "Ushuaia",
+      "country": "Argentina",
+      "vibration": "Fin del mundo",
+      "correspondence": "Fin del mundo · Explorador · Borde / desconocido"
+    },
+    "giza_plateau_eg": {
+      "name": "Meseta de Guiza",
+      "country": "Egipto",
+      "vibration": "Eje del saber",
+      "correspondence": "Eje del saber · Geómetra · Eje / conocimiento"
+    },
+    "stonehenge_gb": {
+      "name": "Stonehenge",
+      "country": "Reino Unido",
+      "vibration": "Resonancia megalítica",
+      "correspondence": "Resonancia megalítica · Guardián del tiempo · Piedra / tiempo"
+    },
+    "tiwanaku_bo": {
+      "name": "Tiahuanaco",
+      "country": "Bolivia",
+      "vibration": "Puerta solar",
+      "correspondence": "Puerta solar · Arquitecto del alba · Sol / origen"
+    },
+    "sigiriya_lk": {
+      "name": "Sigiriya",
+      "country": "Sri Lanka",
+      "vibration": "Roca del león",
+      "correspondence": "Roca del león · Rey guardián · Roca / soberanía"
+    },
+    "bermuda_triangle_vertex_xx": {
+      "name": "Vértice del Triángulo de las Bermudas",
+      "country": "Atlántico",
+      "vibration": "Anomalía magnética",
+      "correspondence": "Anomalía magnética · Navegante · Mar / misterio"
+    },
+    "lake_superior_us_ca": {
+      "name": "Lago Superior",
+      "country": "Estados Unidos/Canadá",
+      "vibration": "Campo de memoria profunda",
+      "correspondence": "Campo de memoria profunda · Aguas antiguas · Profundidad / claridad"
+    },
+    "cape_reinga_nz": {
+      "name": "Cabo Reinga",
+      "country": "Nueva Zelanda",
+      "vibration": "Encuentro de océanos",
+      "correspondence": "Encuentro de océanos · Guía del alma · Océano / paso"
+    },
+    "azores_archipelago_pt": {
+      "name": "Archipiélago de las Azores",
+      "country": "Portugal",
+      "vibration": "Eco atlante",
+      "correspondence": "Eco atlante · Navegante perdido · Isla / eco"
+    },
+    "mount_shasta_us": {
+      "name": "Monte Shasta",
+      "country": "Estados Unidos",
+      "vibration": "Fuego de la raíz",
+      "correspondence": "Fuego de la raíz · Guardián de los orígenes · Origen / fuego"
+    },
+    "krakatoa_id": {
+      "name": "Krakatoa",
+      "country": "Indonesia",
+      "vibration": "Erupción primordial",
+      "correspondence": "Erupción primordial · Destructor y creador · Fuego / creación"
+    },
+    "mount_etna_it": {
+      "name": "Etna",
+      "country": "Italia",
+      "vibration": "Fuego de renovación",
+      "correspondence": "Fuego de renovación · Alquimista · Lava / renovación"
+    },
+    "mauna_kea_us": {
+      "name": "Mauna Kea",
+      "country": "Hawái",
+      "vibration": "Volcán del cielo",
+      "correspondence": "Volcán del cielo · Sacerdote de las estrellas · Cielo / fuego"
+    },
+    "glastonbury_tor_gb": {
+      "name": "Tor de Glastonbury",
+      "country": "Reino Unido",
+      "vibration": "Corazón de Ávalon",
+      "correspondence": "Corazón de Ávalon · Tejedor · Corazón / bruma"
+    },
+    "jerusalem_il": {
+      "name": "Jerusalén",
+      "country": "Israel",
+      "vibration": "Eje de la fe",
+      "correspondence": "Eje de la fe · Mediador · Fe / eje"
+    },
+    "axum_et": {
+      "name": "Axum",
+      "country": "Etiopía",
+      "vibration": "Resonancia del arca",
+      "correspondence": "Resonancia del arca · Cronista · Arca / memoria"
+    },
+    "chichen_itza_mx": {
+      "name": "Chichén Itzá",
+      "country": "México",
+      "vibration": "Viento emplumado",
+      "correspondence": "Viento emplumado · Mensajero · Viento / saber"
+    },
+    "shambhala_node_mn": {
+      "name": "Nodo de Shambhala",
+      "country": "Montañas de Altái",
+      "vibration": "Reino oculto",
+      "correspondence": "Reino oculto · Peregrino de la luz · Oculto / luz"
+    },
+    "delphi_gr": {
+      "name": "Delfos",
+      "country": "Grecia",
+      "vibration": "Ombligo del mundo",
+      "correspondence": "Ombligo del mundo · Oráculo · Centro / oráculo"
+    },
+    "lake_baikal_ru": {
+      "name": "Lago Baikal",
+      "country": "Rusia",
+      "vibration": "Profundidad primordial",
+      "correspondence": "Profundidad primordial · Testigo del tiempo · Profundidad / tiempo"
+    },
+    "teotihuacan_mx": {
+      "name": "Teotihuacán",
+      "country": "México",
+      "vibration": "Ciudad de los dioses",
+      "correspondence": "Ciudad de los dioses · Constructor de la luz · Luz / geometría"
+    }
+  },
+  "ru": {
+    "machu_picchu_pe": {
+      "name": "Мачу-Пикчу",
+      "country": "Перу",
+      "vibration": "Священная гора",
+      "correspondence": "Священная гора · Хранитель · Высота / память"
+    },
+    "uluru_au": {
+      "name": "Улуру",
+      "country": "Австралия",
+      "vibration": "Первозданная скала",
+      "correspondence": "Первозданная скала · Предок · Источник / центр"
+    },
+    "petra_jo": {
+      "name": "Петра",
+      "country": "Иордания",
+      "vibration": "Высеченный город",
+      "correspondence": "Высеченный город · Зодчий пустыни · Камень / история"
+    },
+    "banff_ca": {
+      "name": "Банф",
+      "country": "Канада",
+      "vibration": "Ледниковая чистота",
+      "correspondence": "Ледниковая чистота · Северный хранитель · Лёд / ясность"
+    },
+    "varanasi_in": {
+      "name": "Варанаси",
+      "country": "Индия",
+      "vibration": "Переход",
+      "correspondence": "Переход · Порог · Жизнь / смерть"
+    },
+    "ganges_river_in": {
+      "name": "Ганг",
+      "country": "Индия",
+      "vibration": "Священная вода",
+      "correspondence": "Священная вода · Мать · Очищение"
+    },
+    "mont_saint_michel_fr": {
+      "name": "Мон-Сен-Мишель",
+      "country": "Франция",
+      "vibration": "Поднимающаяся вода",
+      "correspondence": "Поднимающаяся вода · Монах · Прилив / подъём"
+    },
+    "salar_de_uyuni_bo": {
+      "name": "Солончак Уюни",
+      "country": "Боливия",
+      "vibration": "Зеркало неба",
+      "correspondence": "Зеркало неба · Отражение · Небо / земля"
+    },
+    "reykjavik_is": {
+      "name": "Рейкьявик",
+      "country": "Исландия",
+      "vibration": "Огонь и лёд",
+      "correspondence": "Огонь и лёд · Алхимик · Контраст / превращение"
+    },
+    "serengeti_tz": {
+      "name": "Серенгети",
+      "country": "Танзания",
+      "vibration": "Циклический пульс",
+      "correspondence": "Циклический пульс · Священное животное · Ритм / жизнь"
+    },
+    "mount_fuji_jp": {
+      "name": "Фудзияма",
+      "country": "Япония",
+      "vibration": "Чистота",
+      "correspondence": "Чистота · Возрождённый · Форма / обновление"
+    },
+    "tikal_gt": {
+      "name": "Тикаль",
+      "country": "Гватемала",
+      "vibration": "Глубокое время",
+      "correspondence": "Глубокое время · Летописец · Джунгли / время"
+    },
+    "samarkand_uz": {
+      "name": "Самарканд",
+      "country": "Узбекистан",
+      "vibration": "Перекрёсток",
+      "correspondence": "Перекрёсток · Ткач · Пути / истории"
+    },
+    "istanbul_tr": {
+      "name": "Стамбул",
+      "country": "Турция",
+      "vibration": "Мост миров",
+      "correspondence": "Мост миров · Посредник · Восток / запад"
+    },
+    "fez_ma": {
+      "name": "Фес",
+      "country": "Марокко",
+      "vibration": "Живой лабиринт",
+      "correspondence": "Живой лабиринт · Мастер · Переулки / ремесло"
+    },
+    "kyoto_jp": {
+      "name": "Киото",
+      "country": "Япония",
+      "vibration": "Живой храм",
+      "correspondence": "Живой храм · Хранитель традиции · Традиция / тишина"
+    },
+    "mount_kailash_cn": {
+      "name": "Кайлас",
+      "country": "Тибет",
+      "vibration": "Ось мира",
+      "correspondence": "Ось мира · Паломник · Центр / святыня"
+    },
+    "rapa_nui_cl": {
+      "name": "Рапа-Нуи",
+      "country": "Чили",
+      "vibration": "Память предков",
+      "correspondence": "Память предков · Свидетель · Предки / камень"
+    },
+    "angkor_wat_kh": {
+      "name": "Ангкор-Ват",
+      "country": "Камбоджа",
+      "vibration": "Священная геометрия",
+      "correspondence": "Священная геометрия · Строитель · Свет / камень"
+    },
+    "ushuaia_ar": {
+      "name": "Ушуая",
+      "country": "Аргентина",
+      "vibration": "Край света",
+      "correspondence": "Край света · Исследователь · Край / неизвестность"
+    },
+    "giza_plateau_eg": {
+      "name": "Плато Гиза",
+      "country": "Египет",
+      "vibration": "Ось знания",
+      "correspondence": "Ось знания · Геометр · Ось / знание"
+    },
+    "stonehenge_gb": {
+      "name": "Стоунхендж",
+      "country": "Великобритания",
+      "vibration": "Мегалитический отклик",
+      "correspondence": "Мегалитический отклик · Хранитель времени · Камень / время"
+    },
+    "tiwanaku_bo": {
+      "name": "Тиуанако",
+      "country": "Боливия",
+      "vibration": "Солнечные врата",
+      "correspondence": "Солнечные врата · Зодчий рассвета · Солнце / исток"
+    },
+    "sigiriya_lk": {
+      "name": "Сигирия",
+      "country": "Шри-Ланка",
+      "vibration": "Львиная скала",
+      "correspondence": "Львиная скала · Царь-хранитель · Скала / власть"
+    },
+    "bermuda_triangle_vertex_xx": {
+      "name": "Вершина Бермудского треугольника",
+      "country": "Атлантика",
+      "vibration": "Магнитная аномалия",
+      "correspondence": "Магнитная аномалия · Навигатор · Море / тайна"
+    },
+    "lake_superior_us_ca": {
+      "name": "Верхнее озеро",
+      "country": "США/Канада",
+      "vibration": "Поле глубокой памяти",
+      "correspondence": "Поле глубокой памяти · Древние воды · Глубина / ясность"
+    },
+    "cape_reinga_nz": {
+      "name": "Мыс Реинга",
+      "country": "Новая Зеландия",
+      "vibration": "Встреча океанов",
+      "correspondence": "Встреча океанов · Проводник души · Океан / переход"
+    },
+    "azores_archipelago_pt": {
+      "name": "Азорские острова",
+      "country": "Португалия",
+      "vibration": "Атлантическое эхо",
+      "correspondence": "Атлантическое эхо · Заблудившийся навигатор · Остров / эхо"
+    },
+    "mount_shasta_us": {
+      "name": "Шаста",
+      "country": "США",
+      "vibration": "Огонь корня",
+      "correspondence": "Огонь корня · Хранитель истоков · Исток / огонь"
+    },
+    "krakatoa_id": {
+      "name": "Кракатау",
+      "country": "Индонезия",
+      "vibration": "Первозданное извержение",
+      "correspondence": "Первозданное извержение · Разрушитель и творец · Огонь / творение"
+    },
+    "mount_etna_it": {
+      "name": "Этна",
+      "country": "Италия",
+      "vibration": "Огонь обновления",
+      "correspondence": "Огонь обновления · Алхимик · Лава / обновление"
+    },
+    "mauna_kea_us": {
+      "name": "Мауна-Кеа",
+      "country": "Гавайи",
+      "vibration": "Небесный вулкан",
+      "correspondence": "Небесный вулкан · Жрец звёзд · Небо / огонь"
+    },
+    "glastonbury_tor_gb": {
+      "name": "Гластонбери-Тор",
+      "country": "Великобритания",
+      "vibration": "Сердце Авалона",
+      "correspondence": "Сердце Авалона · Ткач · Сердце / туман"
+    },
+    "jerusalem_il": {
+      "name": "Иерусалим",
+      "country": "Израиль",
+      "vibration": "Ось веры",
+      "correspondence": "Ось веры · Посредник · Вера / ось"
+    },
+    "axum_et": {
+      "name": "Аксум",
+      "country": "Эфиопия",
+      "vibration": "Отклик ковчега",
+      "correspondence": "Отклик ковчега · Летописец · Ковчег / память"
+    },
+    "chichen_itza_mx": {
+      "name": "Чичен-Ица",
+      "country": "Мексика",
+      "vibration": "Пернатый ветер",
+      "correspondence": "Пернатый ветер · Вестник · Ветер / знание"
+    },
+    "shambhala_node_mn": {
+      "name": "Узел Шамбалы",
+      "country": "Алтайские горы",
+      "vibration": "Скрытое царство",
+      "correspondence": "Скрытое царство · Путник света · Сокрытое / свет"
+    },
+    "delphi_gr": {
+      "name": "Дельфы",
+      "country": "Греция",
+      "vibration": "Пуп земли",
+      "correspondence": "Пуп земли · Оракул · Центр / оракул"
+    },
+    "lake_baikal_ru": {
+      "name": "Байкал",
+      "country": "Россия",
+      "vibration": "Первозданная глубина",
+      "correspondence": "Первозданная глубина · Свидетель времени · Глубина / время"
+    },
+    "teotihuacan_mx": {
+      "name": "Теотиуакан",
+      "country": "Мексика",
+      "vibration": "Город богов",
+      "correspondence": "Город богов · Строитель света · Свет / геометрия"
+    }
+  }
+}

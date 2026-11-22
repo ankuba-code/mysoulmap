@@ -15,6 +15,11 @@ def test_booking_url_uses_aid_ss_and_label(monkeypatch) -> None:
     query = parse_qs(parsed.query)
     assert query["aid"] == ["123456"]
     assert query["ss"] == ["Machu Picchu, Peru"]
+    assert query["latitude"] == [f"{place.coordinates.lat:.5f}"]
+    assert query["longitude"] == [f"{place.coordinates.lng:.5f}"]
+    assert query["radius"] == ["20"]
+    assert query["dest_type"] == ["latlong"]
+    assert query["order"] == ["distance"]
     assert query["label"] == ["soulmap"]
 
 

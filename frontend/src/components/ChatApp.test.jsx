@@ -20,18 +20,15 @@ describe("ChatApp", () => {
     });
     const user = userEvent.setup();
     render(<ChatApp />);
-    expect(screen.getByRole("button", { name: "Screenshot" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Screenshot" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "PDF" })).toBeDisabled();
     await user.type(screen.getByPlaceholderText(/Beschreibe/i), "Anden Inka");
     await user.click(screen.getByRole("button", { name: "Senden" }));
     expect(await screen.findByRole("status")).toHaveTextContent("Du interagierst mit einer KI.");
     expect(screen.getByText("Machu Picchu.")).toBeInTheDocument();
     expect(screen.getByText(/KI-Assistent gerade nicht erreichbar/)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Unterkunft suchen" })).toHaveAttribute(
-      "href",
-      "/go/mp?lang=de",
-    );
-    expect(screen.getByRole("button", { name: "Screenshot" })).toBeEnabled();
+    expect(screen.getAllByRole("link", { name: "Unterkunft suchen" }).some((link) => link.getAttribute("href") === "/go/mp?lang=de")).toBe(true);
+    expect(screen.queryByRole("button", { name: "Screenshot" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "PDF" })).toBeEnabled();
     expect(postChat).toHaveBeenCalledWith({
       messages: [{ role: "user", content: "Anden Inka" }],

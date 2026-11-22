@@ -82,6 +82,232 @@
   }
 }
 
+.ritual-scene {
+  animation: ritual-scene-in 700ms ease both;
+}
+
+.ritual-answer {
+  animation: ritual-rise 640ms ease both;
+}
+
+.ritual-dock-mark {
+  transition: transform 500ms ease, opacity 500ms ease;
+}
+
+@keyframes ritual-scene-in {
+  from {
+    opacity: 0.45;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes ritual-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@supports (animation-timeline: view()) {
+  .ritual-scene {
+    animation: ritual-scene-in linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 35%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ritual-scene,
+  .ritual-answer,
+  .ritual-dock-mark {
+    animation: none;
+    transition: none;
+  }
+}
+
+.sm-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  border-bottom: 1px solid rgb(255 255 255 / 0.2);
+  background: rgb(8 6 16 / 0.5);
+  backdrop-filter: blur(12px);
+}
+
+.sm-align {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 37rem;
+  padding-top: max(0.75rem, env(safe-area-inset-top));
+  padding-bottom: 0.75rem;
+  padding-inline: max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-left));
+}
+
+@media (min-width: 640px) {
+  .sm-align {
+    --bg-scale: max(100cqi / var(--bg-w), 100vh / var(--bg-h));
+    width: calc(var(--stripe-w) * var(--bg-scale));
+    max-width: none;
+    margin-left: calc(50cqi - (var(--bg-w) * var(--bg-scale)) / 2 + var(--stripe-x) * var(--bg-scale));
+    margin-right: 0;
+    padding-inline: 1.5rem;
+  }
+}
+
+.splash-host {
+  position: relative;
+  background: #08070c;
+  color: #f3e9dc;
+}
+
+.splash-stage {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  height: 100svh;
+  width: 100%;
+  overflow: hidden;
+}
+
+.splash-stage canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.splash-texts {
+  pointer-events: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: max(14vh, 5.5rem);
+  display: flex;
+  justify-content: center;
+  padding: 0 24px;
+  text-align: center;
+}
+
+.splash-line {
+  position: absolute;
+  max-width: 36rem;
+  opacity: 0;
+}
+
+.splash-line h2 {
+  font-family: ui-serif, Georgia, "Times New Roman", serif;
+  font-weight: 300;
+  margin: 0;
+  font-size: clamp(2.2rem, 6vw, 3.8rem);
+  text-transform: uppercase;
+  letter-spacing: 0.35em;
+}
+
+.splash-line-first h2 {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: clamp(1.9rem, 5vw, 3rem);
+}
+
+.splash-line p {
+  font-family: ui-serif, Georgia, "Times New Roman", serif;
+  font-style: italic;
+  font-size: clamp(1.1rem, 2.6vw, 1.35rem);
+  margin: 1rem 0 0;
+  color: rgb(243 233 220 / 0.7);
+}
+
+.splash-hint {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 8vh;
+  text-align: center;
+  font-size: 0.8rem;
+  letter-spacing: 0.25em;
+  color: rgb(243 233 220 / 0.5);
+  animation: splash-pulse 2.6s ease-in-out infinite;
+}
+
+@keyframes splash-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.splash-cta {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 9vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0 24px;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.splash-cta button,
+.splash-skip {
+  font-family: ui-serif, Georgia, "Times New Roman", serif;
+}
+
+.splash-cta button {
+  font-size: 1.3rem;
+  color: #f3e9dc;
+  background: rgb(243 233 220 / 0.05);
+  border: 1px solid rgb(243 233 220 / 0.4);
+  border-radius: 999px;
+  padding: 0.75rem 2rem;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+}
+
+.splash-cta button:hover {
+  background: rgb(243 233 220 / 0.15);
+}
+
+.splash-cta small {
+  font-size: 0.75rem;
+  color: rgb(243 233 220 / 0.55);
+}
+
+.splash-skip {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  border: 0;
+  background: transparent;
+  padding: 0.5rem 0.75rem;
+  color: rgb(243 233 220 / 0.5);
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+}
+
+.splash-stage button:focus-visible {
+  outline: 2px solid #b088ec;
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .splash-hint {
+    animation: none;
+  }
+}
+
 .assistant-md p {
   margin: 0.4rem 0;
 }

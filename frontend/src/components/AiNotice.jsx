@@ -7,7 +7,7 @@ export default function AiNotice({ copy, onClose }) {
   useEffect(() => {
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    buttonRef.current?.focus();
+    buttonRef.current?.focus({ preventScroll: true });
 
     function onKey(event) {
       if (event.key === "Escape") {

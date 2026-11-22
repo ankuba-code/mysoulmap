@@ -5,6 +5,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 from .atlas import Coordinates, Place
+from .booking import booking_search_url
 from .facets import FACETS
 from .fallback import tokenize
 
@@ -64,6 +65,7 @@ class MatchedPlace(BaseModel):
     primaervibration: str
     correspondence: str
     booking_link: str
+    booking_url: str = ""
     score: int
     reasons: list[ScoreReason]
 
@@ -723,6 +725,7 @@ def match_places(
             primaervibration=place.primaervibration,
             correspondence=place.correspondence,
             booking_link=f"/go/{place.id}",
+            booking_url=booking_search_url(place, request.language),
             score=total,
             reasons=reasons,
         )

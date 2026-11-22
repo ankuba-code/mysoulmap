@@ -87,6 +87,8 @@ def test_match_endpoint_records_form_and_result() -> None:
     assert body["anima_card"]["element"] == "earth"
     assert len(body["matches"]) == 3
     assert body["matches"][0]["booking_link"].startswith("/go/")
+    assert body["matches"][0]["booking_url"].startswith("https://www.booking.com/")
+    assert "aid=test-aid" in body["matches"][0]["booking_url"]
     with Session(get_engine()) as session:
         events = session.exec(select(UsageEvent)).all()
     types = sorted(event.event_type for event in events)

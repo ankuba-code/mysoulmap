@@ -4,7 +4,9 @@ from dataclasses import dataclass
 from typing import Literal
 
 from .atlas import Place
+from .booking import booking_search_url
 from .fallback import fallback_message, fallback_place_ids
+from .place_i18n import localized_name
 from .llm import LlmCallError, complete_llm, pop_llm_usage
 from .models_chat import (
     MAX_MESSAGE_LENGTH,
@@ -105,6 +107,7 @@ def build_chat_response(
     source: ChatSource,
     overview: str = "",
     place_notes: list[PlaceNote] | None = None,
+    language: str = "de",
 ) -> ChatResponse:
     by_id = {place.id: place for place in places}
     already = set(shown_place_ids)
@@ -118,6 +121,7 @@ def build_chat_response(
             id=place_id,
             name=by_id[place_id].name,
             booking_link=f"/go/{place_id}",
+            booking_url=booking_search_url(by_id[place_id], language),
             country=by_id[place_id].country,
             coordinates={
                 "lat": by_id[place_id].coordinates.lat,
@@ -145,13 +149,14 @@ def build_chat_response(
 def fallback_response(request: ChatRequest, places: list[Place]) -> ChatResponse:
     place_ids = fallback_place_ids(request, places)
     by_id = {place.id: place for place in places}
-    names = [by_id[place_id].name for place_id in place_ids if place_id in by_id]
+    names = [localized_name(request.language, by_id[place_id]) for place_id in place_ids if place_id in by_id]
     return build_chat_response(
         content=fallback_message(request.language, names),
         place_ids=place_ids,
         shown_place_ids=request.shown_place_ids,
         places=places,
         source="fallback",
+        language=request.language,
     )
 
 
@@ -221,6 +226,7 @@ async def run_chat(
             source="llm",
             overview=output.overview,
             place_notes=output.place_notes,
+            language=request.language,
         ),
         ChatTrace(
             source="llm",

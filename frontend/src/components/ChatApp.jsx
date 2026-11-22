@@ -11,9 +11,9 @@ import {
   canSend,
 } from "../chat/conversation";
 import { cardFromRitual, exportPdf } from "../export/pdf";
-import { LANGUAGE_LABEL, loadRitual } from "../ritual/session";
+import { useSystemLanguage } from "../ritual/language";
+import { LANGUAGE_LABEL, loadRitual, resolveLanguage, saveLanguage } from "../ritual/session";
 import { hasExportableResult } from "../export/results";
-import { exportScreenshot } from "../export/screenshot";
 import AiDisclosure from "./AiDisclosure";
 import ChatMessage from "./ChatMessage";
 import DotSpinner from "./DotSpinner";
@@ -36,19 +36,23 @@ export default function ChatApp({
   onRecommendedPlaces = null,
   seedPrompt = "",
   onSeedHandled = null,
+  reading = false,
 }) {
   const [state, setState] = useState(() => ({
     ...INITIAL_STATE,
     shownPlaceIds: ritualContext?.matched_place_ids ? [...ritualContext.matched_place_ids] : [],
   }));
-  const [language, setLanguage] = useState(initialLanguage);
+  const [language, setLanguage] = useState(() => (embedded ? initialLanguage : resolveLanguage()));
+  useSystemLanguage((next) => {
+    saveLanguage(next);
+    setLanguage(next);
+  }, !embedded);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState("");
   const [tokenNotice, setTokenNotice] = useState(null);
   const [phase, setPhase] = useState(fromRitual && gatePrompts ? "gate" : "chat");
-  const resultRef = useRef(null);
   const inflightRef = useRef(false);
   const seedRef = useRef("");
   const copy = copyFor(language);
@@ -56,8 +60,10 @@ export default function ChatApp({
   useEffect(() => {
     if (embedded) {
       setLanguage(initialLanguage);
+      return;
     }
-  }, [embedded, initialLanguage]);
+    document.documentElement.lang = language || "de";
+  }, [embedded, initialLanguage, language]);
   const tokensSpent = tokenNotice === "exhausted";
   const allowed = canSend(draft, state.messages.length) && !busy && !tokensSpent;
   const canExport = hasExportableResult(state.messages) && !busy && !exporting;
@@ -117,18 +123,6 @@ export default function ChatApp({
     await runTurn(draft);
   }
 
-  async function onExportPng() {
-    setError("");
-    setExporting(true);
-    try {
-      await exportScreenshot(resultRef.current);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : copy.exportError);
-    } finally {
-      setExporting(false);
-    }
-  }
-
   function onExportPdf() {
     setError("");
     setExporting(true);
@@ -183,12 +177,9 @@ export default function ChatApp({
         </header>
       )}
       {state.aiDisclosure ? <AiDisclosure text={copy.disclosure} /> : null}
-      <section
-        ref={resultRef}
-        className="flex flex-1 flex-col gap-3 bg-transparent"
-        aria-live="polite"
-      >
-        {state.messages.map((message, index) => (
+      <section className="flex flex-1 flex-col gap-3 bg-transparent" aria-live="polite">
+        {state.messages.map((message, index) =>
+          reading && message.role === "user" ? null : (
           <ChatMessage
             key={`${message.role}-${index}`}
             message={message}
@@ -197,7 +188,8 @@ export default function ChatApp({
             ritual={embedded}
             hideOverview={hideOverview(state.messages, index)}
           />
-        ))}
+          ),
+        )}
         {busy ? <PendingTurn label={copy.sending} light={embedded} /> : null}
       </section>
       <form
@@ -243,7 +235,10 @@ export default function ChatApp({
               <span className="sr-only">{LANGUAGE_LABEL[language] || LANGUAGE_LABEL.de}</span>
               <select
                 value={language}
-                onChange={(event) => setLanguage(event.target.value)}
+                onChange={(event) => {
+                  saveLanguage(event.target.value);
+                  setLanguage(event.target.value);
+                }}
                 className="rounded-md bg-stone-50 px-2 py-1 ring-1 ring-stone-200"
               >
                 {LANGUAGES.map((item) => (
@@ -256,7 +251,6 @@ export default function ChatApp({
           )}
           <div className="flex flex-wrap items-center gap-2 sm:justify-end">
             <ExportBar
-              onPng={onExportPng}
               onPdf={onExportPdf}
               copy={copy}
               disabled={!canExport}

@@ -70,6 +70,9 @@ def test_llm_success_returns_new_places_only() -> None:
     assert response.message.role == "assistant"
     assert [place.id for place in response.recommended_places] == ["machu_picchu_pe"]
     assert response.recommended_places[0].booking_link == "/go/machu_picchu_pe"
+    assert response.recommended_places[0].booking_url.startswith("https://www.booking.com/searchresults.")
+    assert "aid=test-aid" in response.recommended_places[0].booking_url
+    assert "label=soulmap" in response.recommended_places[0].booking_url
     assert response.shown_place_ids == ["sedona", "machu_picchu_pe"]
 
 

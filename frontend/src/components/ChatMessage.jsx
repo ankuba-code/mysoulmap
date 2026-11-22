@@ -1,7 +1,10 @@
 import ReactMarkdown from "react-markdown";
 import { goHref } from "../chat/goHref";
 import FallbackNotice from "./FallbackNotice";
+import BookingQr from "./BookingQr";
+import CountryLabel from "./CountryLabel";
 import PlaceList from "./PlaceList";
+import { localizePlace } from "../places/localize";
 
 const PLACE_TONES = [
   {
@@ -81,17 +84,49 @@ function RitualSections({ message, copy, language }) {
         }
         const tone = PLACE_TONES[placeIndex % PLACE_TONES.length];
         placeIndex += 1;
+        const shown = localizePlace(
+          {
+            id: section.placeId,
+            name: section.name,
+            country: section.country,
+            primaervibration: section.primaervibration,
+          },
+          language,
+        );
         const booking = recommended.find((place) => place.id === section.placeId);
-        const meta = [section.country, section.primaervibration].filter(Boolean).join(" · ");
         return (
           <article key={section.placeId || `place-${index}`} className={`rounded-2xl border px-4 py-3 text-white ${tone.card}`}>
-            <div className="flex items-center gap-2">
-              <span className={`h-2 w-2 shrink-0 rounded-full ${tone.dot}`} aria-hidden="true" />
-              <h3 className="font-serif text-[20px] font-light italic">{section.name}</h3>
+            <div className="flex items-start gap-3">
+              <BookingQr
+                place={{
+                  id: section.placeId,
+                  name: shown.name,
+                  country: shown.flagCountry || shown.country,
+                  booking_url: booking?.booking_url,
+                  booking_link: booking?.booking_link,
+                }}
+                language={language}
+                label={copy.booking}
+                size={72}
+              />
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className={`h-2 w-2 shrink-0 rounded-full ${tone.dot}`} aria-hidden="true" />
+                  <h3 className="font-serif text-[20px] font-light italic">{shown.name}</h3>
+                </div>
+                {shown.country || shown.primaervibration ? (
+                  <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-white/80">
+                    <CountryLabel country={shown.country} flagCountry={shown.flagCountry} />
+                    {shown.primaervibration ? (
+                      <span className="font-mono text-[10px] tracking-[0.12em] text-white/55">
+                        {shown.country ? "· " : ""}
+                        {shown.primaervibration}
+                      </span>
+                    ) : null}
+                  </p>
+                ) : null}
+              </div>
             </div>
-            {meta ? (
-              <p className="mt-1 font-mono text-[10px] tracking-[0.12em] text-white/55 uppercase">{meta}</p>
-            ) : null}
             <div className="assistant-md mt-2 text-[14px] italic leading-relaxed text-white/80">
               <ReactMarkdown>{section.text}</ReactMarkdown>
             </div>

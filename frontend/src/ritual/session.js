@@ -14,6 +14,18 @@ export function loadLanguage() {
   return LANGUAGES.has(value) ? value : null;
 }
 
+export function resolveLanguage(storedLanguage) {
+  const chosen = loadLanguage();
+  if (chosen) {
+    return chosen;
+  }
+  if (LANGUAGES.has(storedLanguage)) {
+    saveLanguage(storedLanguage);
+    return storedLanguage;
+  }
+  return "de";
+}
+
 export function saveLanguage(language) {
   if (LANGUAGES.has(language)) {
     sessionStorage.setItem(LANGUAGE_KEY, language);

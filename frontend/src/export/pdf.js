@@ -1,7 +1,15 @@
 import { jsPDF } from "jspdf";
+import QRCode from "qrcode";
 import { pickCard } from "../ritual/card";
 import { choiceIcons } from "../ritual/marks";
-import { assistantTexts, collectPlaces } from "./results";
+import { bookingTarget } from "./bookingUrl";
+import { countryFlagCodes } from "../places/country";
+import { localizePlace } from "../places/localize";
+import regularFont from "./fonts/NotoSans-Regular.ttf?inline";
+import boldFont from "./fonts/NotoSans-Bold.ttf?inline";
+import italicFont from "./fonts/NotoSans-Italic.ttf?inline";
+
+const FONT = "NotoSans";
 
 const INK = [42, 36, 32];
 const MUTED = [110, 100, 92];
@@ -11,7 +19,10 @@ const MARGIN = 18;
 const COPY = {
   de: {
     empty: "Kein Ergebnis zum Exportieren.",
-    kicker: "Soulmap",
+    kicker: "SoulMap",
+    printTitle: "Druckkarte",
+    printLead: "Die kleine Karte zum Mitnehmen, mit Symbolen und Zitat.",
+    yourSoulmap: "Deine SoulMap",
     welcomeTitle: "Willkommen",
     welcomeWithCard:
       "Schön, dass du hier bist. Oben liegt die Karte, die aus deinen Antworten entstanden ist: die Symbole, die du gewählt hast, und der Satz, der sie zusammenhält. Darunter findest du Orte und Hinweise, die zu dieser Stimmung passen. Nimm das Blatt als Richtung, nicht als Liste, die du abarbeiten musst.",
@@ -19,6 +30,7 @@ const COPY = {
       "Schön, dass du hier bist. Hier sind die Orte und Hinweise aus deinem Gespräch. Nimm sie als Richtung, nicht als Liste, die du abarbeiten musst.",
     places: "Orte",
     notes: "Reisehinweise",
+    booking: "Unterkunft auf booking.com",
     ton: "Ton",
     impuls: "Impuls",
     archetype: "Archetyp",
@@ -43,7 +55,10 @@ const COPY = {
   },
   en: {
     empty: "Nothing to export.",
-    kicker: "Soulmap",
+    kicker: "SoulMap",
+    printTitle: "Card to take with you",
+    printLead: "The small card to carry along, with symbols and the line.",
+    yourSoulmap: "Your SoulMap",
     welcomeTitle: "Welcome",
     welcomeWithCard:
       "Good to have you here. At the top is the card that grew from your answers: the symbols you chose, and the line that holds them together. Below are places and notes that answer that mood. Keep this page as a direction, not as a list you have to finish.",
@@ -51,6 +66,7 @@ const COPY = {
       "Good to have you here. These are the places and notes from your conversation. Keep them as a direction, not as a list you have to finish.",
     places: "Places",
     notes: "Travel notes",
+    booking: "Stay on booking.com",
     ton: "Tone",
     impuls: "Impulse",
     archetype: "Archetype",
@@ -75,7 +91,10 @@ const COPY = {
   },
   es: {
     empty: "No hay resultado para exportar.",
-    kicker: "Soulmap",
+    kicker: "SoulMap",
+    printTitle: "Carta para llevar",
+    printLead: "La carta pequeña para llevar contigo, con símbolos y la frase.",
+    yourSoulmap: "Tu mapa del alma",
     welcomeTitle: "Bienvenida",
     welcomeWithCard:
       "Qué bien que estés aquí. Arriba está la carta que nació de tus respuestas: los símbolos que elegiste y la frase que los reúne. Debajo, lugares y notas que responden a ese tono. Guarda esta página como una dirección, no como una lista que tengas que cumplir.",
@@ -83,6 +102,7 @@ const COPY = {
       "Qué bien que estés aquí. Aquí están los lugares y las notas de tu conversación. Guárdalos como una dirección, no como una lista que tengas que cumplir.",
     places: "Lugares",
     notes: "Notas de viaje",
+    booking: "Alojamiento",
     ton: "Tono",
     impuls: "Impulso",
     archetype: "Arquetipo",
@@ -107,7 +127,10 @@ const COPY = {
   },
   ru: {
     empty: "Нет результата для экспорта.",
-    kicker: "Soulmap",
+    kicker: "SoulMap",
+    printTitle: "Карта с собой",
+    printLead: "Небольшая карта, которую можно взять с собой, с символами и фразой.",
+    yourSoulmap: "Твоя карта души",
     welcomeTitle: "Добро пожаловать",
     welcomeWithCard:
       "Хорошо, что ты здесь. Сверху карта, которая выросла из твоих ответов: символы, которые ты выбрал, и фраза, которая их держит. Ниже места и заметки, которые отвечают этому настроению. Возьми лист как направление, а не как список, который нужно выполнить.",
@@ -115,6 +138,7 @@ const COPY = {
       "Хорошо, что ты здесь. Здесь места и заметки из твоего разговора. Возьми их как направление, а не как список, который нужно выполнить.",
     places: "Места",
     notes: "Заметки о путешествии",
+    booking: "Жильё",
     ton: "Тон",
     impuls: "Импульс",
     archetype: "Архетип",
@@ -162,6 +186,8 @@ export function cardFromRitual(stored) {
   };
 }
 
+export { countryFlagCodes } from "../places/country";
+
 export function pdfSafe(value) {
   let text = String(value ?? "");
   text = text
@@ -174,22 +200,39 @@ export function pdfSafe(value) {
     .replace(/[\u00A0\u202F\u2007\u2008\u2009\u200A]/g, " ")
     .replace(/[\u200B\u200C\u200D\uFEFF\u00AD]/g, "")
     .replace(/\u2022/g, "-")
-    .replace(/[^\n\x20-\x7E\u00A1-\u00FF]/g, "")
+    .replace(/[^\n\x20-\x7E\u00A1-\u00FF\u0400-\u04FF]/g, "")
     .replace(/[ \t]{2,}/g, " ")
     .replace(/[ \t]+\n/g, "\n")
     .replace(/\n{3,}/g, "\n\n");
   return text.trim();
 }
 
+function fontBase64(dataUrl) {
+  const source = String(dataUrl);
+  const comma = source.indexOf(",");
+  return comma >= 0 ? source.slice(comma + 1) : source;
+}
+
+function useTextFont(doc) {
+  doc.addFileToVFS("NotoSans-Regular.ttf", fontBase64(regularFont));
+  doc.addFont("NotoSans-Regular.ttf", FONT, "normal");
+  doc.addFileToVFS("NotoSans-Bold.ttf", fontBase64(boldFont));
+  doc.addFont("NotoSans-Bold.ttf", FONT, "bold");
+  doc.addFileToVFS("NotoSans-Italic.ttf", fontBase64(italicFont));
+  doc.addFont("NotoSans-Italic.ttf", FONT, "italic");
+  doc.setFont(FONT, "normal");
+}
+
 export function createSoulmapPdf({ messages = [], disclosure = "", card = null, language = "de" } = {}) {
-  const copy = pdfCopy(card?.language || language);
-  const places = collectPlaces(messages);
-  const notes = assistantTexts(messages).map(plainNote).filter(Boolean);
+  const lang = COPY[card?.language || language] ? card?.language || language : "de";
+  const copy = pdfCopy(lang);
+  const places = placeBlocks(messages);
+  const notes = noteBlocks(messages);
   if (!places.length && !notes.length && !card) {
     throw new Error(copy.empty);
   }
   const doc = new jsPDF({ unit: "mm", format: "a4" });
-  doc.setFont("helvetica", "normal");
+  useTextFont(doc);
   const cursor = makeCursor(doc);
 
   if (card) {
@@ -207,9 +250,12 @@ export function createSoulmapPdf({ messages = [], disclosure = "", card = null, 
 
   if (places.length) {
     writeSectionTitle(doc, cursor, copy.places);
-    for (const place of places) {
-      writePlace(doc, cursor, place);
-    }
+    places.forEach((place, index) => {
+      writePlace(doc, cursor, place, copy, lang);
+      if (index < places.length - 1) {
+        writePlaceSeparator(doc, cursor);
+      }
+    });
   }
 
   if (notes.length) {
@@ -251,14 +297,6 @@ function stripMarkdown(value) {
     .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
 }
 
-function wordLabel(copy, value) {
-  if (value == null || value === "") {
-    return "";
-  }
-  const key = String(value);
-  return copy.words[key] || key;
-}
-
 function makeCursor(doc) {
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
@@ -272,10 +310,10 @@ function makeCursor(doc) {
         return;
       }
       doc.addPage();
-      doc.setFont("helvetica", "normal");
+      doc.setFont(FONT, "normal");
       doc.setFontSize(9);
       doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
-      doc.text("Soulmap", this.margin, 12);
+      doc.text("SoulMap", this.margin, 12);
       this.y = 20;
     },
   };
@@ -292,7 +330,7 @@ function linesOf(doc, text, width) {
 }
 
 function writeCenteredLine(doc, line, y, size, style, color) {
-  doc.setFont("helvetica", style);
+  doc.setFont(FONT, style);
   doc.setFontSize(size);
   doc.setTextColor(color[0], color[1], color[2]);
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -304,7 +342,7 @@ function writeCenteredLine(doc, line, y, size, style, color) {
 function writeLeft(doc, cursor, line, size, style, color, indent = 0) {
   const lead = size * 0.48;
   cursor.ensure(lead + 1);
-  doc.setFont("helvetica", style);
+  doc.setFont(FONT, style);
   doc.setFontSize(size);
   doc.setTextColor(color[0], color[1], color[2]);
   doc.text(line, cursor.margin + indent, cursor.y);
@@ -312,7 +350,7 @@ function writeLeft(doc, cursor, line, size, style, color, indent = 0) {
 }
 
 function writeWrapped(doc, cursor, text, { size, style, color, indent = 0, gap = 2 }) {
-  doc.setFont("helvetica", style);
+  doc.setFont(FONT, style);
   doc.setFontSize(size);
   const lines = linesOf(doc, text, cursor.width - indent);
   for (const line of lines) {
@@ -335,92 +373,59 @@ function writeSectionTitle(doc, cursor, label) {
 }
 
 function drawCard(doc, card, copy, x, y, width) {
-  const inner = width - 18;
+  const inner = width - 16;
   const icons = Array.isArray(card.icons) ? card.icons.filter(Boolean) : [];
-  const clusterH = icons.length ? 44 : 0;
+  const clusterH = icons.length ? 46 : 0;
+  const blocks = [
+    { text: copy.printTitle, size: 9, style: "normal", color: MUTED, gap: 0 },
+    { text: copy.printLead, size: 10, style: "italic", color: MUTED, gap: 2.2 },
+    { text: copy.yourSoulmap, size: 9, style: "normal", color: MUTED, gap: 3 },
+    { text: card.name, size: 16, style: "bold", color: INK, gap: 2.4 },
+    {
+      text: [labeled(copy.ton, card.ton), labeled(copy.impuls, card.impuls), labeled(copy.archetype, card.symbol)]
+        .filter(Boolean)
+        .join("   ·   "),
+      size: 9,
+      style: "normal",
+      color: MUTED,
+      gap: 2.2,
+    },
+    { text: card.desc ? `"${card.desc}"` : "", size: 11, style: "italic", color: INK, gap: 3.2 },
+  ]
+    .map((block) => {
+      doc.setFont(FONT, block.style);
+      doc.setFontSize(block.size);
+      return { ...block, lines: linesOf(doc, block.text, inner) };
+    })
+    .filter((block) => block.lines.length);
 
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(16);
-  const nameLines = linesOf(doc, card.name, inner);
+  if (icons.length) {
+    drawSymbolCluster(doc, icons, x + width / 2, y + clusterH / 2, 17);
+  }
 
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  const chipLines = linesOf(
-    doc,
-    [labeled(copy.ton, card.ton), labeled(copy.impuls, card.impuls), labeled(copy.archetype, card.symbol)]
-      .filter(Boolean)
-      .join("   ·   "),
-    inner,
-  );
-  const factLines = linesOf(
-    doc,
-    [
-      labeled(copy.element, wordLabel(copy, card.element)),
-      labeled(copy.rhythm, wordLabel(copy, card.innerRhythm)),
-      labeled(copy.intensity, card.intensity),
-      labeled(copy.frequency, card.frequency),
-    ]
-      .filter(Boolean)
-      .join("   ·   "),
-    inner,
-  );
-
-  doc.setFont("helvetica", "italic");
-  doc.setFontSize(11);
-  const quoteLines = linesOf(doc, card.desc ? `"${card.desc}"` : "", inner - 6);
-
-  const kickerLead = 9 * 0.48;
-  const nameLead = 16 * 0.48;
-  const chipLead = 9 * 0.48;
-  const quoteLead = 11 * 0.48;
-  const factLead = 9 * 0.48;
-  const height =
-    9 +
-    kickerLead +
-    3 +
-    (clusterH ? clusterH + 2 : 0) +
-    nameLines.length * nameLead +
-    1.5 +
-    chipLines.length * chipLead +
-    (quoteLines.length ? 2.5 + quoteLines.length * quoteLead : 0) +
-    (factLines.length ? 2.5 + factLines.length * factLead : 0) +
-    8;
-
+  const boxTop = y + clusterH + (icons.length ? 3 : 0);
+  let cursorY = boxTop + 8;
+  for (const block of blocks) {
+    cursorY += block.gap;
+    for (const line of block.lines) {
+      cursorY = writeCenteredLine(doc, line, cursorY, block.size, block.style, block.color);
+    }
+  }
+  const boxHeight = Math.max(28, cursorY - boxTop + 6);
   doc.setFillColor(248, 244, 238);
   doc.setDrawColor(196, 186, 174);
   doc.setLineWidth(0.35);
-  doc.roundedRect(x, y, width, height, 3, 3, "FD");
+  doc.roundedRect(x, boxTop, width, boxHeight, 3, 3, "FD");
 
-  let cursorY = y + 9;
-  cursorY = writeCenteredLine(doc, copy.kicker, cursorY, 9, "normal", MUTED);
-  cursorY += 3;
-
-  if (icons.length) {
-    drawSymbolCluster(doc, icons, x + width / 2, cursorY + clusterH / 2, 17);
-    cursorY += clusterH + 2;
-  }
-
-  for (const line of nameLines) {
-    cursorY = writeCenteredLine(doc, line, cursorY, 16, "bold", INK);
-  }
-  cursorY += 1.5;
-  for (const line of chipLines) {
-    cursorY = writeCenteredLine(doc, line, cursorY, 9, "normal", MUTED);
-  }
-  if (quoteLines.length) {
-    cursorY += 2.5;
-    for (const line of quoteLines) {
-      cursorY = writeCenteredLine(doc, line, cursorY, 11, "italic", INK);
-    }
-  }
-  if (factLines.length) {
-    cursorY += 2.5;
-    for (const line of factLines) {
-      cursorY = writeCenteredLine(doc, line, cursorY, 9, "normal", MUTED);
+  cursorY = boxTop + 8;
+  for (const block of blocks) {
+    cursorY += block.gap;
+    for (const line of block.lines) {
+      cursorY = writeCenteredLine(doc, line, cursorY, block.size, block.style, block.color);
     }
   }
 
-  return y + height;
+  return boxTop + boxHeight;
 }
 
 function labeled(label, value) {
@@ -686,18 +691,177 @@ function cubicChain(segments) {
   return points;
 }
 
-function writePlace(doc, cursor, place) {
-  if (!place?.name) {
+function placeBlocks(messages) {
+  const seen = new Set();
+  const blocks = [];
+  for (const message of messages) {
+    const sections = Array.isArray(message.sections) ? message.sections : [];
+    for (const section of sections) {
+      if (section.kind !== "place" || !section.name) {
+        continue;
+      }
+      const id = section.placeId || section.name;
+      if (seen.has(id)) {
+        continue;
+      }
+      seen.add(id);
+      const linked = (message.recommendedPlaces || []).find((place) => place.id === section.placeId);
+      blocks.push({
+        id: section.placeId || "",
+        name: section.name,
+        country: section.country || linked?.country || "",
+        primaervibration: section.primaervibration || linked?.primaervibration || "",
+        correspondence: linked?.correspondence || "",
+        reasons: linked?.reasons || [],
+        booking_link: linked?.booking_link || "",
+        booking_url: linked?.booking_url || "",
+        text: section.text || "",
+      });
+    }
+    for (const place of message.recommendedPlaces || []) {
+      if (!place?.id || seen.has(place.id)) {
+        continue;
+      }
+      seen.add(place.id);
+      blocks.push(place);
+    }
+  }
+  return blocks;
+}
+
+const UNAVAILABLE_SENTENCES = [
+  "Unser KI-Assistent ist gerade nicht erreichbar.",
+  "Basierend auf deiner Anfrage ist unser KI-Assistent gerade nicht erreichbar.",
+  "Our AI assistant is currently unavailable.",
+  "Based on your request, our AI assistant is currently unavailable.",
+  "Nuestro asistente de IA no está disponible en este momento.",
+  "Según tu consulta, nuestro asistente de IA no está disponible ahora.",
+  "Наш ИИ-ассистент сейчас недоступен.",
+  "По твоему запросу ассистент сейчас недоступен.",
+];
+
+function withoutUnavailableNotice(value) {
+  let text = String(value || "");
+  for (const sentence of UNAVAILABLE_SENTENCES) {
+    text = text.split(sentence).join("");
+  }
+  return text.replace(/[ \t]{2,}/g, " ").replace(/\n{3,}/g, "\n\n").trim();
+}
+
+function noteBlocks(messages) {
+  const notes = [];
+  for (const message of messages) {
+    if (message.role !== "assistant") {
+      continue;
+    }
+    const sections = Array.isArray(message.sections) ? message.sections : [];
+    const described = sections.some((section) => section.kind === "place" && section.text);
+    if (described) {
+      for (const section of sections) {
+        if (section.kind === "overview" && section.text) {
+          notes.push(section.text);
+        }
+      }
+      continue;
+    }
+    if (message.content) {
+      notes.push(message.content);
+    }
+  }
+  return notes.map((note) => plainNote(withoutUnavailableNotice(note))).filter(Boolean);
+}
+
+function flagDataUrl(code) {
+  if (typeof document === "undefined") {
+    return "";
+  }
+  const canvas = document.createElement("canvas");
+  canvas.width = 64;
+  canvas.height = 48;
+  const context = canvas.getContext?.("2d");
+  if (!context) {
+    return "";
+  }
+  const emoji = String(code)
+    .toUpperCase()
+    .replace(/[A-Z]/g, (letter) => String.fromCodePoint(127397 + letter.charCodeAt(0)));
+  context.font = "40px serif";
+  context.textBaseline = "middle";
+  context.fillText(emoji, 2, 24);
+  try {
+    return canvas.toDataURL("image/png");
+  } catch {
+    return "";
+  }
+}
+
+function drawBookingQr(doc, url, x, y, side) {
+  let qr;
+  try {
+    qr = QRCode.create(url, { errorCorrectionLevel: "M" });
+  } catch {
     return;
   }
-  cursor.ensure(18);
-  writeWrapped(doc, cursor, place.name, { size: 12, style: "bold", color: INK, gap: 1 });
-  const meta = [place.country, place.primaervibration].filter(Boolean).join(" · ");
-  if (meta) {
-    writeWrapped(doc, cursor, meta, { size: 9, style: "normal", color: MUTED, gap: 1 });
+  const count = qr.modules.size;
+  const quiet = 4;
+  const cell = side / (count + quiet * 2);
+  doc.setFillColor(255, 255, 255);
+  doc.rect(x, y, side, side, "F");
+  doc.setFillColor(INK[0], INK[1], INK[2]);
+  for (let row = 0; row < count; row += 1) {
+    for (let column = 0; column < count; column += 1) {
+      if (qr.modules.get(column, row)) {
+        doc.rect(x + (column + quiet) * cell, y + (row + quiet) * cell, cell, cell, "F");
+      }
+    }
   }
-  if (place.correspondence) {
-    writeWrapped(doc, cursor, place.correspondence, { size: 10.5, style: "italic", color: INK, gap: 1.2 });
+  if (typeof doc.link === "function") {
+    doc.link(x, y, side, side, { url });
+  }
+}
+
+function writePlace(doc, cursor, place, copy, lang) {
+  const shown = localizePlace(place, lang) || place;
+  if (!shown?.name) {
+    return;
+  }
+  const target = bookingTarget(place, lang);
+  const qrSide = 26;
+  const fullWidth = cursor.width;
+  if (target) {
+    cursor.ensure(qrSide + 6);
+    cursor.width = Math.max(48, fullWidth - qrSide - 4);
+  }
+  const top = cursor.y;
+  const titleLines = linesOf(doc, shown.name, cursor.width);
+  titleLines.forEach((line) => {
+    writeLeft(doc, cursor, line, 12, "bold", INK, 0);
+  });
+  if (shown.country) {
+    const flags = countryFlagCodes(shown.flagCountry || shown.country)
+      .map(flagDataUrl)
+      .filter(Boolean);
+    let offset = 0;
+    if (flags.length && typeof doc.addImage === "function") {
+      flags.forEach((url, index) => {
+        doc.addImage(url, "PNG", cursor.margin + index * 8, cursor.y - 3.2, 6.4, 4.6);
+      });
+      offset = flags.length * 8;
+    }
+    const countryLines = linesOf(doc, shown.country, cursor.width - offset);
+    countryLines.forEach((line, index) => {
+      writeLeft(doc, cursor, line, 10, "normal", INK, index === 0 ? offset : 0);
+    });
+  }
+  cursor.y += 1;
+  if (shown.primaervibration) {
+    writeWrapped(doc, cursor, shown.primaervibration, { size: 9, style: "normal", color: MUTED, gap: 1 });
+  }
+  if (shown.text) {
+    writeWrapped(doc, cursor, shown.text, { size: 10.5, style: "normal", color: INK, gap: 1.4 });
+  }
+  if (shown.correspondence) {
+    writeWrapped(doc, cursor, shown.correspondence, { size: 10.5, style: "italic", color: INK, gap: 1.2 });
   }
   for (const reason of (place.reasons || []).slice(0, 3)) {
     if (!reason?.text) {
@@ -705,14 +869,23 @@ function writePlace(doc, cursor, place) {
     }
     writeWrapped(doc, cursor, `- ${reason.text}`, { size: 10, style: "normal", color: MUTED, indent: 2, gap: 0.8 });
   }
-  if (place.booking_link) {
-    writeWrapped(doc, cursor, place.booking_link, { size: 9, style: "normal", color: MUTED, gap: 1.5 });
+  const textEnd = cursor.y;
+  cursor.width = fullWidth;
+  if (target) {
+    drawBookingQr(doc, target, cursor.margin + fullWidth - qrSide, top, qrSide);
+    cursor.y = Math.max(textEnd, top + qrSide + 2);
+    writeWrapped(doc, cursor, copy.booking, { size: 8, style: "normal", color: MUTED, gap: 1 });
   }
-  cursor.y += 1;
+}
+
+function writePlaceSeparator(doc, cursor) {
+  cursor.y += 2;
+  cursor.ensure(8);
+  const inset = 24;
   doc.setDrawColor(RULE[0], RULE[1], RULE[2]);
-  doc.setLineWidth(0.2);
-  doc.line(cursor.margin, cursor.y, cursor.margin + cursor.width, cursor.y);
-  cursor.y += 5;
+  doc.setLineWidth(0.35);
+  doc.line(cursor.margin + inset, cursor.y, cursor.margin + cursor.width - inset, cursor.y);
+  cursor.y += 6;
 }
 
 function writeNote(doc, cursor, note) {
@@ -760,7 +933,7 @@ function drawFooter(doc, disclosure, page) {
   doc.setDrawColor(RULE[0], RULE[1], RULE[2]);
   doc.setLineWidth(0.25);
   doc.line(MARGIN, pageHeight - 13, pageWidth - MARGIN, pageHeight - 13);
-  doc.setFont("helvetica", "normal");
+  doc.setFont(FONT, "normal");
   doc.setFontSize(8);
   doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
   const label = String(page);

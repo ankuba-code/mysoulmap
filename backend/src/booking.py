@@ -4,6 +4,7 @@ from urllib.parse import urlencode
 from .atlas import Place
 
 BOOKING_LANGS = frozenset({"de", "es", "en", "ru"})
+RADIUS_KM = 20
 
 
 def normalize_booking_lang(lang: str | None) -> str:
@@ -18,6 +19,11 @@ def booking_search_url(place: Place, lang: str | None = None) -> str:
         {
             "aid": os.getenv("BOOKING_AFFILIATE_ID", ""),
             "ss": f"{place.name}, {place.country}",
+            "latitude": f"{place.coordinates.lat:.5f}",
+            "longitude": f"{place.coordinates.lng:.5f}",
+            "radius": str(RADIUS_KM),
+            "dest_type": "latlong",
+            "order": "distance",
             "label": "soulmap",
         }
     )

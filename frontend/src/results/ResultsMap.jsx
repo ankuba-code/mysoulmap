@@ -1,10 +1,11 @@
 import { useEffect } from "react";
-import { Circle, MapContainer, Marker, Popup, TileLayer, Tooltip, useMap } from "react-leaflet";
+import { Circle, MapContainer, Marker, Popup, TileLayer, Tooltip, ZoomControl, useMap } from "react-leaflet";
 import L from "leaflet";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
 import "leaflet/dist/leaflet.css";
+import CountryLabel from "../components/CountryLabel";
 
 const icon = L.icon({
   iconUrl: markerIcon,
@@ -16,15 +17,16 @@ const icon = L.icon({
   shadowSize: [41, 41],
 });
 
-function FocusPlace({ placeId, places }) {
+function RefreshSize() {
   const map = useMap();
   useEffect(() => {
-    const place = places.find((item) => item.id === placeId);
-    if (!place) {
-      return;
-    }
-    map.flyTo([place.coordinates.lat, place.coordinates.lng], 4);
-  }, [map, placeId, places]);
+    const frame = window.requestAnimationFrame(() => map.invalidateSize());
+    const later = window.setTimeout(() => map.invalidateSize(), 200);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.clearTimeout(later);
+    };
+  }, [map]);
   return null;
 }
 
@@ -44,21 +46,32 @@ function FitPlaces({ places, origin }) {
   return null;
 }
 
-export default function ResultsMap({ places, focusPlaceId = null, origin = null, originLabel = "" }) {
-  const first = places[0]?.coordinates;
+const ZOOM_LABELS = {
+  de: ["Vergrößern", "Verkleinern"],
+  en: ["Zoom in", "Zoom out"],
+  es: ["Acercar", "Alejar"],
+  ru: ["Приблизить", "Отдалить"],
+};
+
+export default function ResultsMap({ places, focusPlaceId = null, origin = null, originLabel = "", layout = "page", language = "de" }) {
+  const focused = places.find((place) => place.id === focusPlaceId)?.coordinates;
+  const first = focused || places[0]?.coordinates;
+  const [zoomIn, zoomOut] = ZOOM_LABELS[language] || ZOOM_LABELS.de;
   return (
     <MapContainer
       center={first ? [first.lat, first.lng] : [20, 0]}
-      zoom={2}
-      scrollWheelZoom={false}
-      className="h-64 w-full overflow-hidden rounded-2xl sm:h-[420px]"
+      zoom={focused ? 8 : 2}
+      zoomControl={false}
+      scrollWheelZoom={layout === "overlay"}
+      className={layout === "overlay" ? "h-full w-full" : "h-64 w-full overflow-hidden rounded-2xl sm:h-[420px]"}
     >
+      <ZoomControl zoomInTitle={zoomIn} zoomOutTitle={zoomOut} />
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      <FitPlaces places={places} origin={origin} />
-      <FocusPlace placeId={focusPlaceId} places={places} />
+      <RefreshSize />
+      {focused ? null : <FitPlaces places={places} origin={origin} />}
       {origin ? (
         <Circle
           center={[origin.latitude, origin.longitude]}
@@ -73,14 +86,18 @@ export default function ResultsMap({ places, focusPlaceId = null, origin = null,
         </Circle>
       ) : null}
       {places.map((place) => (
-        <Marker key={place.id} position={[place.coordinates.lat, place.coordinates.lng]} icon={icon}>
+        <Marker key={place.id} position={[place.coordinates.lat, place.coordinates.lng]} icon={icon} alt={place.name} title={place.name}>
           <Tooltip permanent direction="top" offset={[0, -28]}>
-            {(place.country || place.name).toUpperCase()}
+            {place.name}
           </Tooltip>
           <Popup>
             {place.name}
-            <br />
-            {place.country}
+            {place.country ? (
+              <>
+                <br />
+                <CountryLabel country={place.country} flagCountry={place.flagCountry} />
+              </>
+            ) : null}
           </Popup>
         </Marker>
       ))}

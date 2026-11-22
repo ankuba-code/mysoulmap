@@ -1,19 +1,20 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
-import { QRCodeSVG } from "qrcode.react";
 import AiNotice from "../components/AiNotice";
+import BookingQr from "../components/BookingQr";
+import CountryLabel from "../components/CountryLabel";
 import ChatApp from "../components/ChatApp";
 import RitualShell from "../components/RitualShell";
 import { goHref } from "../chat/goHref";
 import { copyFor } from "../chat/copy";
-import { cardFromRitual, exportPdf } from "../export/pdf";
-import { exportScreenshot } from "../export/screenshot";
 import { pickCard } from "../ritual/card";
 import { reasonText, ritualCopy, ritualLines, ritualWord } from "../ritual/copy";
 import { SymbolCluster, choiceIcons } from "../ritual/marks";
-import { clearRitual, loadLanguage, loadRitual, saveLanguage, saveRitual } from "../ritual/session";
+import { clearRitual, loadRitual, resolveLanguage, saveLanguage, saveRitual } from "../ritual/session";
 import { loadGeo } from "./geo";
+import { localizePlace } from "../places/localize";
 import ResultsMap from "./ResultsMap";
+import TerrainShadowbox from "./TerrainShadowbox";
 
 export default function ResultsPage() {
   const stored = loadRitual();
@@ -25,19 +26,16 @@ export default function ResultsPage() {
 
 function ResultsBody({ stored }) {
   const { result } = stored;
-  const [language, setLanguage] = useState(() => loadLanguage() || stored.language || "de");
+  const [language, setLanguage] = useState(() => resolveLanguage(stored.language));
   const copy = ritualCopy(language);
   const booking = copyFor(language);
   const card = result.anima_card;
   const anima = pickCard(stored.answers, language);
   const icons = choiceIcons(stored.answers);
-  const shareRef = useRef(null);
   const [origin, setOrigin] = useState(null);
   const [noticeOpen, setNoticeOpen] = useState(false);
-  const [focusPlaceId, setFocusPlaceId] = useState(null);
-  const [seedPrompt, setSeedPrompt] = useState("");
+  const [panel, setPanel] = useState(null);
   const [extraPlaces, setExtraPlaces] = useState([]);
-  const pageUrl = typeof window === "undefined" ? "/results" : window.location.href;
 
   const context = useMemo(
     () => ({
@@ -52,6 +50,10 @@ function ResultsBody({ stored }) {
     }),
     [card, language, result.matches, stored.answers],
   );
+
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -78,8 +80,8 @@ function ResultsBody({ stored }) {
         byId.set(place.id, place);
       }
     }
-    return [...byId.values()];
-  }, [result.matches, extraPlaces]);
+    return [...byId.values()].map((place) => localizePlace(place, language));
+  }, [result.matches, extraPlaces, language]);
 
   function mergeChatPlaces(recommended) {
     if (!recommended?.length) {
@@ -107,6 +109,7 @@ function ResultsBody({ stored }) {
             : null,
           primaervibration: place.primaervibration || "",
           correspondence: place.correspondence || "",
+          booking_url: place.booking_url || "",
           booking_link: place.booking_link || `/go/${place.id}`,
           score: null,
           reasons: [],
@@ -132,41 +135,12 @@ function ResultsBody({ stored }) {
 
   return (
     <RitualShell language={language} onLanguage={onLanguage}>
-      <div ref={shareRef} className="grid gap-10">
+      <div className="grid gap-10">
         <header className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
           <div>
             <h1 className="font-serif text-3xl font-light tracking-tight sm:text-4xl">{copy.resultsTitle}</h1>
           </div>
           <div className="flex w-full flex-col items-stretch gap-2 sm:w-auto sm:items-end">
-            <div className="grid grid-cols-2 gap-2 sm:flex">
-              <button
-                type="button"
-                onClick={() => void exportScreenshot(shareRef.current)}
-                className="rounded-full border border-white/40 px-4 py-2.5 text-center text-[13px] sm:py-2"
-              >
-                {copy.screenshot}
-              </button>
-              <button
-                type="button"
-                onClick={() =>
-                  exportPdf({
-                    messages: [
-                      {
-                        role: "assistant",
-                        content: "",
-                        recommendedPlaces: places,
-                      },
-                    ],
-                    disclosure: copy.guestHint,
-                    card: cardFromRitual({ ...stored, language }),
-                    language,
-                  })
-                }
-                className="rounded-full border border-white/40 px-4 py-2.5 text-center text-[13px] sm:py-2"
-              >
-                {copy.pdfCard}
-              </button>
-            </div>
             <Link to="/?card=1" className="rounded-full border border-white/40 px-4 py-2.5 text-center text-[13px] sm:py-2">
               {copy.toCard}
             </Link>
@@ -194,7 +168,7 @@ function ResultsBody({ stored }) {
         </section>
 
         <section id="karte" className="scroll-mt-4 overflow-hidden rounded-2xl border border-white/30">
-          <ResultsMap places={mapped} focusPlaceId={focusPlaceId} origin={origin} originLabel={copy.origin} />
+          <ResultsMap places={mapped} origin={origin} originLabel={copy.origin} language={language} />
           {origin ? (
             <p className="border-t border-white/15 px-4 py-2 text-[10px] leading-relaxed text-white/45">
               {copy.origin}. This product includes GeoLite2 data created by{" "}
@@ -212,29 +186,32 @@ function ResultsBody({ stored }) {
             {places.map((place) => (
               <article key={place.id} className="border-b border-white/25 pb-5">
                 <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
+                <div className="flex items-start gap-3">
+                  <BookingQr place={place} language={language} label={booking.booking} />
                   <div className="min-w-0">
                     <h3 className="font-serif text-[22px] italic">{place.name}</h3>
-                    <p className="mt-1 font-mono text-[10px] tracking-[0.12em] break-words text-white/55 uppercase">
-                      {[place.country, place.primaervibration].filter(Boolean).join(" · ")}
+                    <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-white/80">
+                      <CountryLabel country={place.country} flagCountry={place.flagCountry} />
+                      {place.primaervibration ? (
+                        <span className="font-mono text-[10px] tracking-[0.12em] text-white/55">
+                          {place.country ? "· " : ""}
+                          {place.primaervibration}
+                        </span>
+                      ) : null}
                     </p>
                   </div>
+                </div>
                   <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
                     <button
                       type="button"
-                      onClick={() => {
-                        setFocusPlaceId(place.id);
-                        document.getElementById("karte")?.scrollIntoView?.({ behavior: "smooth", block: "start" });
-                      }}
+                      onClick={() => setPanel({ place, mode: "map" })}
                       className="rounded-full border border-white/40 px-3 py-2 text-center text-[12px] sm:px-4"
                     >
                       {copy.showTerrain}
                     </button>
                     <button
                       type="button"
-                      onClick={() => {
-                        setSeedPrompt(copy.promptOnePlace.replace("{name}", place.name));
-                        document.getElementById("reiseassistent")?.scrollIntoView?.({ behavior: "smooth" });
-                      }}
+                      onClick={() => setPanel({ place, mode: "detail" })}
                       className="rounded-full border border-white/40 px-3 py-2 text-center text-[12px] sm:px-4"
                     >
                       {copy.moreAbout}
@@ -279,22 +256,6 @@ function ResultsBody({ stored }) {
           </div>
         </section>
 
-        <section className="border-t border-white/25 pt-8">
-          <p className="font-mono text-[10px] tracking-[0.18em] text-white/60 uppercase">{copy.qrTitle}</p>
-          <p className="mt-2 text-[13px] italic text-white/70">{copy.qrLead}</p>
-          <div className="mt-5 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
-            <div className="rounded-2xl border border-white/40 p-3">
-              <QRCodeSVG value={pageUrl} size={128} bgColor="transparent" fgColor="#f6f2ec" />
-            </div>
-            <div className="space-y-2">
-              <p className="font-mono text-[11px] break-all text-white/60">{pageUrl}</p>
-              <a href={pageUrl} className="text-[13px] italic underline-offset-4 hover:underline">
-                {copy.openLink}
-              </a>
-              <p className="max-w-[42ch] text-[12px] italic text-white/60">{copy.localHint}</p>
-            </div>
-          </div>
-        </section>
       </div>
 
       <section id="reiseassistent" className="mt-10 border-t border-white/25 pt-8">
@@ -307,8 +268,6 @@ function ResultsBody({ stored }) {
             initialLanguage={language}
             fromRitual
             ritualContext={context}
-            seedPrompt={seedPrompt}
-            onSeedHandled={() => setSeedPrompt("")}
             gatePrompts={{
               placeDetails: copy.promptPlaceDetails,
               morePlaces: copy.promptMorePlaces,
@@ -320,6 +279,29 @@ function ResultsBody({ stored }) {
         </div>
       </section>
       {noticeOpen ? <AiNotice copy={copy} onClose={() => setNoticeOpen(false)} /> : null}
+      {panel ? (
+        <TerrainShadowbox
+          place={panel.place}
+          places={mapped}
+          origin={origin}
+          originLabel={copy.origin}
+          closeLabel={copy.close}
+          language={language}
+          onClose={() => setPanel(null)}
+        >
+          {panel.mode === "detail" ? (
+            <ChatApp
+              embedded
+              reading
+              initialLanguage={language}
+              fromRitual
+              ritualContext={context}
+              seedPrompt={copy.promptOnePlace.replace("{name}", panel.place.name)}
+              onRecommendedPlaces={mergeChatPlaces}
+            />
+          ) : null}
+        </TerrainShadowbox>
+      ) : null}
       <p className="mt-8 text-xs text-white/50">
         <Link to="/" onClick={() => clearRitual()} className="underline-offset-4 hover:underline">
           {copy.restart}

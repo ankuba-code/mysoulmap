@@ -34,7 +34,9 @@ describe("ChatMessage", () => {
     expect(screen.getByRole("heading", { name: "Zu allen drei Orten" })).toBeInTheDocument();
     expect(screen.getByText("Allgemein")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Machu Picchu" })).toBeInTheDocument();
-    expect(screen.getByText("Peru · Sacred Mountain")).toBeInTheDocument();
+    expect(screen.getByText("Peru")).toBeInTheDocument();
+    expect(screen.getByText("🇵🇪")).toBeInTheDocument();
+    expect(screen.getByText(/Sacred Mountain/)).toBeInTheDocument();
     expect(screen.getByText("Anreise über Lima.")).toBeInTheDocument();
     expect(screen.getByText("Früh auf den Berg.")).toBeInTheDocument();
     expect(screen.queryByText("Dieser Fließtext bleibt im Verlauf.")).not.toBeInTheDocument();

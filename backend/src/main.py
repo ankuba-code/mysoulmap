@@ -42,6 +42,7 @@ from .events import (
     log_chat_events,
     log_match_events,
     log_rate_limited,
+    ui_language_from_header,
 )
 from .geocode import locate_text
 from .geoip import lookup_ip
@@ -207,6 +208,13 @@ def health_signals(request: Request):
 @limiter.limit(LIMIT_GEO)
 def geo(request: Request) -> dict[str, str | float | int | None]:
     return lookup_ip(client_ip(request))
+
+
+@app.get("/language")
+@limiter.limit(LIMIT_GEO)
+def language(request: Request) -> dict[str, str]:
+    # Accept-Language kommt vom Browser und spiegelt die Systemsprache.
+    return {"language": ui_language_from_header(request.headers.get("accept-language"))}
 
 
 @app.get("/atlas/places")

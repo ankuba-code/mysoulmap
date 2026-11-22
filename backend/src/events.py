@@ -25,6 +25,20 @@ def client_ip(request: Request) -> str:
     return "0.0.0.0"
 
 
+UI_LANGUAGES = frozenset({"de", "en", "es", "ru"})
+
+
+def ui_language_from_header(header: str | None) -> str:
+    """Oberflächensprache aus der primären Systemsprache. Unbekannt bleibt Deutsch."""
+    tag = os_language_from_header(header)
+    if not tag:
+        return "de"
+    language = tag.split("-", 1)[0]
+    if language in UI_LANGUAGES:
+        return language
+    return "de"
+
+
 def os_language_from_header(header: str | None) -> str | None:
     """Primäre Sprache aus Accept-Language, zum Beispiel de-DE. Nicht der ganze Header."""
     if not header:

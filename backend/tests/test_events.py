@@ -6,7 +6,7 @@ from sqlmodel import Session, select
 from src.db import get_engine
 from starlette.requests import Request
 
-from src.events import client_ip, is_form_submission, os_language_from_header
+from src.events import client_ip, is_form_submission, os_language_from_header, ui_language_from_header
 from src.llm import LlmCallError
 from src.main import app
 from src.models_chat import ChatRequest
@@ -40,6 +40,25 @@ def test_client_ip_ignores_spoofed_forwarded_header() -> None:
         }
     )
     assert client_ip(request) == "10.0.0.8"
+
+
+def test_ui_language_picks_one_of_four_or_german() -> None:
+    assert ui_language_from_header("en-US,en;q=0.9,de;q=0.8") == "en"
+    assert ui_language_from_header("es-MX,es;q=0.9") == "es"
+    assert ui_language_from_header("ru") == "ru"
+    assert ui_language_from_header("de-AT,de;q=0.9") == "de"
+    assert ui_language_from_header("fr-FR,fr;q=0.9,en;q=0.8") == "de"
+    assert ui_language_from_header("*") == "de"
+    assert ui_language_from_header(None) == "de"
+
+
+def test_language_endpoint_reads_accept_language() -> None:
+    response = client.get("/language", headers={"Accept-Language": "es-ES,es;q=0.9,en;q=0.5"})
+    assert response.status_code == 200
+    assert response.json() == {"language": "es"}
+
+    fallback = client.get("/language", headers={"Accept-Language": "fr-FR,fr;q=0.8"})
+    assert fallback.json() == {"language": "de"}
 
 
 def test_os_language_keeps_primary_tag() -> None:

@@ -103,6 +103,7 @@ class RecommendedPlace(BaseModel):
     id: str
     name: str
     booking_link: str
+    booking_url: str = ""
     country: str = ""
     coordinates: dict[str, float] | None = None
     primaervibration: str = ""

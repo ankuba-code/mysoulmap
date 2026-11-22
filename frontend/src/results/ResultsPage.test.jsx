@@ -1,18 +1,20 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { saveRitual, clearRitual } from "../ritual/session";
 import ResultsPage from "./ResultsPage";
 
 vi.mock("./ResultsMap", () => ({
-  default: ({ origin }) => <div>{origin ? `Standort ${origin.country_code}` : "Karte"}</div>,
+  default: ({ origin, focusPlaceId }) => (
+    <div>{origin ? `Standort ${origin.country_code}` : "Karte"}{focusPlaceId ? ` Fokus ${focusPlaceId}` : ""}</div>
+  ),
 }));
 
 vi.mock("../components/ChatApp", () => ({
   default: ({ fromRitual, ritualContext, seedPrompt }) => (
     <p>
-      Chat {String(fromRitual)} {ritualContext.matched_place_ids.join(",")} {seedPrompt}
+      Chat {String(fromRitual)} {ritualContext.matched_place_ids.join(",")} {seedPrompt || ""}
     </p>
   ),
 }));
@@ -50,8 +52,13 @@ async function acknowledgeAi(user) {
 }
 
 describe("ResultsPage", () => {
+  afterEach(() => {
+    vi.mocked(window.scrollTo).mockRestore();
+  });
+
   beforeEach(() => {
     clearRitual();
+    vi.spyOn(window, "scrollTo").mockImplementation(() => {});
     vi.stubGlobal(
       "fetch",
       vi.fn(async () => ({
@@ -59,6 +66,16 @@ describe("ResultsPage", () => {
         json: async () => ({ country_code: "XX", latitude: null, longitude: null, accuracy_radius_km: null }),
       })),
     );
+  });
+
+  it("opens at the top", () => {
+    saveRitual(RITUAL);
+    render(
+      <MemoryRouter>
+        <ResultsPage />
+      </MemoryRouter>,
+    );
+    expect(window.scrollTo).toHaveBeenCalledWith(0, 0);
   });
 
   it("sends visitors without a ritual back to the start", () => {
@@ -110,7 +127,7 @@ describe("ResultsPage", () => {
     expect(fetch).toHaveBeenCalledWith("/api/geo");
   });
 
-  it("scrolls to the map when terrain is shown", async () => {
+  it("opens the terrain in a shadowbox and leaves the upper map", async () => {
     saveRitual({
       language: "de",
       answers: {},
@@ -147,8 +164,15 @@ describe("ResultsPage", () => {
     const map = document.getElementById("karte");
     map.scrollIntoView = vi.fn();
     await acknowledgeAi(user);
+    expect(screen.getByText("Karte")).toBeInTheDocument();
+    expect(screen.queryByText("Karte Fokus mp")).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Terrain anzeigen" }));
-    expect(map.scrollIntoView).toHaveBeenCalledWith({ behavior: "smooth", block: "start" });
+    const dialog = screen.getByRole("dialog", { name: "Machu Picchu" });
+    expect(dialog).toHaveTextContent("Karte Fokus mp");
+    expect(map.scrollIntoView).not.toHaveBeenCalled();
+    expect(screen.getByText("Karte")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Schließen" }));
+    expect(screen.queryByRole("dialog", { name: "Machu Picchu" })).not.toBeInTheDocument();
   });
 
   it("asks about one place without repeating the shared prompt", async () => {
@@ -185,11 +209,17 @@ describe("ResultsPage", () => {
         <ResultsPage />
       </MemoryRouter>,
     );
+    const assistant = document.getElementById("reiseassistent");
+    assistant.scrollIntoView = vi.fn();
     await acknowledgeAi(user);
     await user.click(screen.getByRole("button", { name: "Mehr erfahren" }));
-    expect(screen.getByText(/Chat true mp/)).toHaveTextContent("Vertiefe nur diesen einen Atlas-Ort");
-    expect(screen.getByText(/Chat true mp/)).toHaveTextContent("Ort: Machu Picchu.");
-    expect(screen.getByText(/Chat true mp/)).not.toHaveTextContent("Anreise allgemein");
+    const dialog = screen.getByRole("dialog", { name: "Machu Picchu" });
+    expect(dialog).toHaveTextContent("Karte Fokus mp");
+    expect(dialog).toHaveTextContent("Vertiefe nur diesen einen Atlas-Ort");
+    expect(dialog).toHaveTextContent("Ort: Machu Picchu.");
+    expect(dialog).not.toHaveTextContent("Anreise allgemein");
+    expect(screen.getByText(/^Chat true mp\s*$/)).toBeInTheDocument();
+    expect(assistant.scrollIntoView).not.toHaveBeenCalled();
   });
 
   it("draws the GeoLite2 area on the map", async () => {
@@ -256,7 +286,7 @@ describe("ResultsPage", () => {
         },
         matches: [
           {
-            id: "mp",
+            id: "machu_picchu_pe",
             name: "Machu Picchu",
             country: "Peru",
             coordinates: { lat: -13.16, lng: -72.54 },
@@ -296,17 +326,23 @@ describe("ResultsPage", () => {
 
     await user.click(screen.getByRole("button", { name: "es" }));
     expect(screen.getByRole("heading", { name: "Resultados" })).toBeInTheDocument();
-    expect(screen.getAllByText("Tu SoulMap").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Tu mapa del alma").length).toBeGreaterThan(0);
     expect(screen.getByText(/Movimiento interior Ascenso/)).toBeInTheDocument();
     expect(screen.getByText("El elemento se refleja: Tierra.")).toBeInTheDocument();
     expect(screen.getByText("El paisaje coincide con lo que elegiste.")).toBeInTheDocument();
+    expect(screen.getByText("Perú")).toBeInTheDocument();
+    expect(screen.getAllByText(/Montaña sagrada/).length).toBeGreaterThan(0);
+    expect(screen.queryByText("Sacred Mountain")).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "ru" }));
     expect(screen.getByRole("heading", { name: "Результаты" })).toBeInTheDocument();
-    expect(screen.getAllByText("Твоя SoulMap").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Твоя карта души").length).toBeGreaterThan(0);
     expect(screen.getByText(/Внутреннее движение Подъём/)).toBeInTheDocument();
     expect(screen.getByText("Стихия откликается: Земля.")).toBeInTheDocument();
     expect(screen.getByText("Пейзаж совпадает с твоим выбором.")).toBeInTheDocument();
+    expect(screen.getByText("Мачу-Пикчу")).toBeInTheDocument();
+    expect(screen.getByText("Перу")).toBeInTheDocument();
+    expect(screen.queryByText("Peru")).not.toBeInTheDocument();
     expect(screen.queryByText("Ergebnisse")).not.toBeInTheDocument();
   });
 
