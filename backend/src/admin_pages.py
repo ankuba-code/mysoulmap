@@ -254,6 +254,26 @@ def _model_section(payload: dict) -> str:
     )
 
 
+def _halt_section(payload: dict) -> str:
+    halted = bool(payload.get("chat_halt"))
+    if halted:
+        control = (
+            "<form method=\"post\" action=\"/admin/halt\">"
+            '<input type="hidden" name="halt" value="false">'
+            "<button type=\"submit\">Chat wieder an</button>"
+            "</form>"
+            "<span>Chat ist aus</span>"
+        )
+    else:
+        control = (
+            "<form method=\"post\" action=\"/admin/halt\">"
+            '<input type="hidden" name="halt" value="true">'
+            '<button type="submit" class="halt">Not-Aus</button>'
+            "</form>"
+        )
+    return f"<section class=\"tools\"><span>Not-Aus</span>{control}</section>"
+
+
 def stats_page(payload: dict) -> str:
     llm = payload.get("llm_monitoring") or {}
     window_label = _window_label(llm)
@@ -322,6 +342,7 @@ def stats_page(payload: dict) -> str:
     th, td {{ text-align: left; padding: 0.45rem 0.6rem; border-bottom: 1px solid #e7e5e4; font-size: 0.92rem; }}
     button {{ padding: 0.4rem 0.7rem; border: 0; border-radius: 0.4rem; background: #1c1917; color: #fff; }}
     button:disabled {{ background: #b45309; }}
+    button.halt {{ background: #e11d48; }}
     .dot {{ display: inline-block; width: 0.55rem; height: 0.55rem; margin-left: 0.45rem; border-radius: 999px; background: #e11d48; vertical-align: middle; }}
     .dot.ok {{ background: #16a34a; }}
     .tools {{ display: flex; align-items: center; gap: 0.75rem; }}
@@ -341,6 +362,7 @@ def stats_page(payload: dict) -> str:
       </div>
     </header>
     {_model_section(payload)}
+    {_halt_section(payload)}
     {budget}
     {langfuse}
     <section class="cards">

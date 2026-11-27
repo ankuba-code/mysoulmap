@@ -181,6 +181,26 @@ def test_admin_switches_chat_model() -> None:
     client.post("/admin/model", json={"model": "gpt-5-mini"})
 
 
+def test_admin_toggles_chat_halt() -> None:
+    client.cookies.clear()
+    denied = client.post("/admin/halt", json={"halt": True})
+    assert denied.status_code == 401
+    assert _login().status_code == 200
+    stopped = client.post("/admin/halt", json={"halt": True})
+    assert stopped.status_code == 200
+    assert stopped.json() == {"halt": True}
+    stats = client.get("/admin/stats")
+    assert stats.json()["chat_halt"] is True
+    page = client.get("/admin")
+    assert "Chat wieder an" in page.text
+    assert "Chat ist aus" in page.text
+    resumed = client.post("/admin/halt", json={"halt": False})
+    assert resumed.json() == {"halt": False}
+    assert "Not-Aus" in client.get("/admin").text
+    unknown = client.post("/admin/halt", json={"halt": "maybe"})
+    assert unknown.status_code == 422
+
+
 def test_logout_invalidates_session() -> None:
     assert _login().status_code == 200
     assert client.post("/admin/logout").status_code == 200

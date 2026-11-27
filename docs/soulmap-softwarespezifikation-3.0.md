@@ -1,6 +1,6 @@
 # Soulmap Softwarespezifikation 3.0
 
-**Datum:** 24.11.2026 · **Status:** umgesetzt, läuft auf dem VPS  
+**Datum:** 24.11.2026 · **Status:** Vorgänger, abgelöst durch `soulmap-softwarespezifikation-3.1.md`  
 **Vorgänger:** `soulmap-softwarespezifikation-2.0-kompakt.md` und die ausführliche Fassung `soulmap-softwarespezifikation.md` (Stand 2.9 vom 16.09.2026)  
 **Risikoanalyse:** `soulmap-ki-risikoanalyse.md` bleibt gültig für den Chat. Diese Fassung beschreibt den gebauten Umfang.
 

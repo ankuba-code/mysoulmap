@@ -41,6 +41,25 @@ export async function switchChatModel(model) {
   return data;
 }
 
+export async function setChatHalt(halt) {
+  const response = await fetch("/api/admin/halt", {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ halt }),
+  });
+  const data = await readJson(response);
+  if (response.status === 401) {
+    const error = new Error("UNAUTHORIZED");
+    error.code = "UNAUTHORIZED";
+    throw error;
+  }
+  if (!response.ok) {
+    throw new Error(data?.error?.message || "Der Not-Aus konnte nicht gesetzt werden.");
+  }
+  return data;
+}
+
 export async function fetchStats(raw = false) {
   const response = await fetch(`/api/admin/stats${raw ? "?raw=true" : ""}`, {
     credentials: "include",

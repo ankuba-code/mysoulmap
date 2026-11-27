@@ -1,9 +1,13 @@
 from fastapi.testclient import TestClient
+from sqlmodel import Session, select
 
 from src.atlas import PLACES
+from src.chat_model import set_chat_halt
+from src.db import get_engine
 from src.llm import LlmCallError
 from src.main import app
 from src.models_chat import LlmOutput
+from src.models_events import UsageEvent
 
 client = TestClient(app)
 
@@ -77,6 +81,30 @@ def test_chat_scope_violation_returns_fallback(monkeypatch) -> None:
     assert body["source"] == "fallback"
     allowed = {place.id for place in PLACES}
     assert {place["id"] for place in body["recommended_places"]}.issubset(allowed)
+
+
+def test_chat_halt_skips_the_model_and_records_the_code(monkeypatch) -> None:
+    called = {"count": 0}
+
+    async def fake_llm(**_kwargs: object) -> LlmOutput:
+        called["count"] += 1
+        return LlmOutput(message="Sollte nicht laufen.", place_ids=["machu_picchu_pe"])
+
+    monkeypatch.setattr("src.chat.complete_llm", fake_llm)
+    with Session(get_engine()) as session:
+        set_chat_halt(session, True)
+    try:
+        response = client.post("/chat", json=VALID_BODY)
+    finally:
+        with Session(get_engine()) as session:
+            set_chat_halt(session, False)
+    assert response.status_code == 200
+    body = response.json()
+    assert body["source"] == "fallback"
+    assert called["count"] == 0
+    with Session(get_engine()) as session:
+        stored = session.exec(select(UsageEvent).where(UsageEvent.error_code == "CHAT_HALTED")).first()
+    assert stored is not None
 
 
 def test_chat_rejects_overlong_history() -> None:

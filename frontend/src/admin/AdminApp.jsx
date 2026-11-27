@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchStats, loginAdmin, logoutAdmin, switchChatModel } from "./api";
+import { fetchStats, loginAdmin, logoutAdmin, setChatHalt, switchChatModel } from "./api";
 import AdminLogin from "./AdminLogin";
 import { ChartPanel, FallbackPanel, LangfusePanel, MonthPanel, OriginPanel, OverviewPanel, PlacesPanel, RawPanel } from "./AdminCharts";
 
@@ -94,6 +94,27 @@ export default function AdminApp() {
     }
   }
 
+  async function onHalt(halt) {
+    setBusy(true);
+    setError("");
+    try {
+      const result = await setChatHalt(halt);
+      setStats((current) =>
+        current
+          ? { ...current, chat_halt: typeof result.halt === "boolean" ? result.halt : halt }
+          : current,
+      );
+    } catch (err) {
+      if (err.code === "UNAUTHORIZED") {
+        setNeedsLogin(true);
+        return;
+      }
+      setError(err instanceof Error ? err.message : "Der Not-Aus konnte nicht gesetzt werden.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function onRawConfirm() {
     setBusy(true);
     setError("");
@@ -170,6 +191,20 @@ export default function AdminApp() {
               </button>
             );
           })}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm text-stone-500">Not-Aus</span>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => onHalt(stats.chat_halt !== true)}
+            className={`rounded-lg px-3 py-2 text-sm text-white ${
+              stats.chat_halt ? "bg-stone-900" : "bg-rose-600"
+            } disabled:opacity-80`}
+          >
+            {stats.chat_halt ? "Chat wieder an" : "Not-Aus"}
+          </button>
+          {stats.chat_halt ? <span className="text-sm text-rose-700">Chat ist aus</span> : null}
         </div>
         <nav className="flex flex-wrap gap-2">
           {(stats.langfuse

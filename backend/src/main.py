@@ -34,7 +34,7 @@ from .admin_pages import login_page, stats_page
 from .atlas import PLACES, Place, filter_places, get_place_by_id
 from .budget import attach_budget_signal, estimate_chat_tokens, get_book
 from .chat import fallback_response, run_chat
-from .chat_model import CHAT_MODELS, active_chat_model, set_chat_model
+from .chat_model import CHAT_MODELS, active_chat_model, chat_is_halted, set_chat_halt, set_chat_model
 from .model_status import model_reachable
 from .llm import flush_langfuse, langfuse_project_url
 from .langfuse_metrics import fetch_langfuse_widgets
@@ -310,6 +310,20 @@ async def chat(request: Request, body: ChatRequest) -> ChatResponse:
     now = datetime.now(timezone.utc).replace(tzinfo=None)
     ip_address = client_ip(request)
     with Session(get_engine()) as session:
+        halted = chat_is_halted(session)
+    if halted:
+        response = fallback_response(body, PLACES)
+        log_chat_events(
+            request,
+            body,
+            response,
+            error_code="CHAT_HALTED",
+            latency_ms=0,
+            input_tokens=None,
+            output_tokens=None,
+        )
+        return response
+    with Session(get_engine()) as session:
         used = tokens_used(session, ip_address, now)
     if token_limit_reached(used):
         return JSONResponse(
@@ -410,6 +424,7 @@ def admin_page(request: Request, raw: bool = False):
             payload = _with_langfuse(attach_charts(aggregate_stats(session, start, end, raw=raw)))
             payload["chat_model"] = active_chat_model(session)
             payload["chat_model_reachable"] = model_reachable(payload["chat_model"])
+            payload["chat_halt"] = chat_is_halted(session)
             return HTMLResponse(stats_page(payload))
     return HTMLResponse(login_page())
 
@@ -500,6 +515,55 @@ async def admin_model(request: Request):
     return {"model": selected, "reachable": reachable}
 
 
+def _halt_flag(raw: object) -> bool | None:
+    if isinstance(raw, bool):
+        return raw
+    if isinstance(raw, str):
+        lowered = raw.strip().lower()
+        if lowered == "true":
+            return True
+        if lowered == "false":
+            return False
+    return None
+
+
+@app.post("/admin/halt")
+@limiter.limit(LIMIT_ADMIN_STATS)
+async def admin_halt(request: Request):
+    token = request.cookies.get(COOKIE_NAME)
+    if not is_admin_session(token):
+        if _is_form_request(request):
+            return RedirectResponse("/admin/login", status_code=303)
+        return JSONResponse(
+            status_code=401,
+            content=error_payload("UNAUTHORIZED", "Admin-Anmeldung erforderlich."),
+        )
+    if _is_form_request(request):
+        parsed = parse_qs((await request.body()).decode("utf-8"), keep_blank_values=True)
+        raw_halt: object = (parsed.get("halt") or [""])[0]
+        html_mode = True
+    else:
+        try:
+            body = await request.json()
+        except Exception:
+            body = {}
+        raw_halt = body.get("halt") if isinstance(body, dict) else None
+        html_mode = False
+    halted = _halt_flag(raw_halt)
+    if halted is None:
+        if html_mode:
+            return RedirectResponse("/admin", status_code=303)
+        return JSONResponse(
+            status_code=422,
+            content=error_payload("VALIDATION_ERROR", "Not-Aus erwartet true oder false."),
+        )
+    with Session(get_engine()) as session:
+        selected = set_chat_halt(session, halted)
+    if html_mode:
+        return RedirectResponse("/admin", status_code=303)
+    return {"halt": selected}
+
+
 @app.get("/admin/stats")
 @limiter.limit(LIMIT_ADMIN_STATS)
 def admin_stats(
@@ -517,4 +581,5 @@ def admin_stats(
         payload = _with_langfuse(attach_charts(aggregate_stats(session, start, end, raw=raw)))
         payload["chat_model"] = active_chat_model(session)
         payload["chat_model_reachable"] = model_reachable(payload["chat_model"])
+        payload["chat_halt"] = chat_is_halted(session)
         return payload

@@ -1,6 +1,6 @@
 # Soulmap Spezifikation 3.0 — Fragen und Antworten
 
-**Stand:** 24.11.2026  
+**Stand:** 24.11.2026 · **Abgelöst durch** `soulmap-spezifikation-3.1-fragen-antworten.md`  
 **Quelle:** `soulmap-softwarespezifikation-3.0.md`  
 Die Antworten geben nur wieder, was diese Fassung festlegt.
 

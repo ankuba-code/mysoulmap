@@ -8,9 +8,10 @@ vi.mock("./api", () => ({
   loginAdmin: vi.fn(),
   logoutAdmin: vi.fn(),
   switchChatModel: vi.fn(),
+  setChatHalt: vi.fn(),
 }));
 
-import { fetchStats, loginAdmin, switchChatModel } from "./api";
+import { fetchStats, loginAdmin, setChatHalt, switchChatModel } from "./api";
 
 const STATS = {
   period: "2026-08-27/2026-09-25",
@@ -52,6 +53,7 @@ describe("AdminApp", () => {
     fetchStats.mockReset();
     loginAdmin.mockReset();
     switchChatModel.mockReset();
+    setChatHalt.mockReset();
   });
 
   it("shows login when the session is missing", async () => {
@@ -83,6 +85,11 @@ describe("AdminApp", () => {
     const next = screen.getByRole("button", { name: "Claude Haiku 5.5" });
     expect(next).toBeDisabled();
     expect(next.querySelector("[title='nicht erreichbar']")).toBeInTheDocument();
+    setChatHalt.mockResolvedValue({ halt: true });
+    await user.click(screen.getByRole("button", { name: "Not-Aus" }));
+    expect(setChatHalt).toHaveBeenCalledWith(true);
+    expect(screen.getByRole("button", { name: "Chat wieder an" })).toBeInTheDocument();
+    expect(screen.getByText("Chat ist aus")).toBeInTheDocument();
     expect(screen.getByText("Formulare vs. Ergebnisse")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Grafiken" }));
     expect(screen.getByRole("img", { name: "Weltkarte" })).toHaveAttribute("src", STATS.charts.world);
