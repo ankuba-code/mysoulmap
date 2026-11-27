@@ -1,6 +1,6 @@
 # Soulmap Softwarespezifikation 3.1
 
-**Datum:** 27.11.2026 · **Status:** beschreibt den laufenden Stand und schließt die zwei offenen Human-in-the-Loop-Lücken  
+**Datum:** 27.11.2026 · **Status:** umgesetzt, läuft auf dem VPS  
 **Vorgänger:** `soulmap-softwarespezifikation-3.0.md` (24.11.2026)  
 **Risikoanalyse:** `soulmap-ki-risikoanalyse.md` bleibt der Katalog. Eskalation E4 (Feedback) und E5 (Not-Aus) sind mit dieser Fassung geschlossen. Die übrigen Fälle daraus bleiben organisatorisch offen.
 
@@ -167,7 +167,7 @@ Von außen hängen die JSON-Endpunkte unter `/api`. `/go/…` geht ohne dieses P
 
 **`POST /match`.** Body: `{ "answers": { q0…q7 }, "language": "de" }`. Antwort: `anima_card` und `matches` (id, Name, Land, Koordinaten, Begründung, `booking_link` als `/go/{id}`, `booking_url` als fertige Booking-Suche). Die Suche setzt Breite, Länge, Radius 20 km, `dest_type=latlong` und Sortierung nach Entfernung. Kein Modellaufruf. Der Not-Aus berührt `/match` nicht.
 
-**`POST /chat`.** Verlauf und `shown_place_ids` kommen vom Client. `source` ist `llm` oder `fallback`. `ai_disclosure` kennzeichnet die KI. Empfohlene Orte tragen `booking_url`. Vor dem Modell prüfen Token-Deckel der IP (50.000 Tokens in 30 Tagen, sonst 429 `TOKEN_LIMIT`) und das globale Tagesbudget. Danach gilt Abschnitt 9.
+**`POST /chat`.** Verlauf und `shown_place_ids` kommen vom Client. `source` ist `llm` oder `fallback`. `ai_disclosure` kennzeichnet die KI. Empfohlene Orte tragen `booking_url`. Ist `chat_halt` `on`, endet der Aufruf sofort mit dem Fallback und dem Fehlercode `CHAT_HALTED`. Token-Deckel und Tagesbudget werden dann nicht geprüft und nichts wird reserviert. Sonst gelten vor dem Modell der Token-Deckel der IP (50.000 Tokens in 30 Tagen, sonst 429 `TOKEN_LIMIT`) und das globale Tagesbudget. Der weitere Vertrag steht in Abschnitt 9.
 
 **`POST /feedback`.** Body: `{ "vote": "like" | "dislike", "text": "" }`. `text` ist optional und höchstens 500 Zeichen. Unbekanntes `vote` ist 422. Antwort: `{ "ok": true }`. Der Endpunkt speichert nur die Bewertung, nicht den Chatverlauf.
 
@@ -227,18 +227,18 @@ Beide bekommen dasselbe JSON-Schema aus `LlmOutput`: alle Felder erforderlich, `
 
 Der Systemprompt bleibt die Systemrolle. Der Verlauf ist keine Autorität. Aus der Modellantwort entsteht kein HTML. Timeout, ein Retry bei Verbindungs- und Anbieterfehlern, danach Fallback: unverändert.
 
-`POST /admin/model` mit der Admin-Sitzung setzt `chat_model`. Ein unbekannter Name wird abgelehnt. Die HTML-Ansicht unter `/admin` zeigt beide Namen. Der aktive Name ist markiert und trägt einen Punkt: grün, wenn OpenRouter den Slug in `/models` listet, rot sonst. Die Prüfung ist nur Anzeige, sie schaltet das Modell nicht um.
+`POST /admin/model` mit der Admin-Sitzung setzt `chat_model`. Ein unbekannter Name wird abgelehnt. Die Admin-Oberfläche zeigt beide Namen. Der aktive Name ist markiert und trägt einen Punkt: grün, wenn OpenRouter den Slug in `/models` listet, rot sonst. Die Prüfung ist nur Anzeige, sie schaltet das Modell nicht um.
 
 ### 9.2 Not-Aus
 
 Der Not-Aus ist der Schalter für den Fall, den Rate-Limit, der Token-Deckel je IP und das Tagesbudget nicht fangen: ein verteilter Kostenanstieg über viele Adressen, oder ein Modell, das abgeschaltet werden muss, bevor ein Deploy fertig ist.
 
-`POST /admin/halt` verlangt die Admin-Sitzung. Der Body ist `{ "halt": true }` oder `{ "halt": false }`. `true` schreibt `chat_halt=on`, `false` schreibt `off`. In der HTML-Ansicht ist es eine Schaltfläche: bei laufendem Chat „Not-Aus“, bei Halt „Chat wieder an“.
+`POST /admin/halt` verlangt die Admin-Sitzung. Der Body ist `{ "halt": true }` oder `{ "halt": false }`. `true` schreibt `chat_halt=on`, `false` schreibt `off`. Ein anderer Wert ist 422. Die Statistik antwortet mit `chat_halt`. Die Schaltfläche sitzt in der Admin-Oberfläche unter der Modellwahl: bei laufendem Chat „Not-Aus“, bei Halt „Chat wieder an“ und der Hinweis „Chat ist aus“. Dieselbe Schaltfläche liegt in der HTML-Ansicht der API.
 
-Ist `chat_halt` `on`, gilt für `POST /chat`:
+Die Prüfung steht am Anfang von `POST /chat`, vor Token-Deckel und Tagesbudget. Ist `chat_halt` `on`:
 
-- OpenRouter wird nicht aufgerufen. Es entstehen keine Modellkosten.
-- Die Antwort ist der bestehende Fallback: 1–2 Atlas-Orte, fester mehrsprachiger Hinweis, `source` ist `fallback`.
+- OpenRouter wird nicht aufgerufen. Es wird kein Budget reserviert.
+- Die Antwort ist der bestehende Fallback: 1–2 Atlas-Orte, fester mehrsprachiger Hinweis, `source` ist `fallback`. Der Token-Deckel antwortet in diesem Fall nicht mit 429.
 - Das Ereignis trägt den Fehlercode `CHAT_HALTED`, damit der Halt in der Statistik von einem Modellausfall unterscheidbar ist.
 - `/match`, Atlas, Karte, Buchung und Feedback bleiben erreichbar.
 

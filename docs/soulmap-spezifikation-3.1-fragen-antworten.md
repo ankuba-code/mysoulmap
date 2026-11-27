@@ -1,6 +1,6 @@
 # Soulmap Spezifikation 3.1 — Fragen und Antworten
 
-**Stand:** 27.11.2026  
+**Stand:** 27.11.2026 · **Status:** umgesetzt, läuft auf dem VPS  
 **Quelle:** `soulmap-softwarespezifikation-3.1.md`  
 Die Antworten geben nur wieder, was diese Fassung festlegt.
 
@@ -164,7 +164,7 @@ JSON-Endpunkte hängen von außen unter `/api`. `/go/…` geht ohne dieses Präf
 `{ "answers": { q0…q7 }, "language": "de" }`. Zurück kommen `anima_card` und `matches` mit Buchungslink und fertiger Booking-Suche (20 km, `dest_type=latlong`). Es gibt keinen Modellaufruf. Der Not-Aus lässt `/match` in Ruhe.
 
 **Was ist der Vertrag von `POST /chat`?**  
-Verlauf und `shown_place_ids` kommen vom Client. `source` ist `llm` oder `fallback`. `ai_disclosure` kennzeichnet die KI. Vor dem Modell gelten der Token-Deckel der IP (50.000 Tokens in 30 Tagen, sonst 429 `TOKEN_LIMIT`) und das globale Tagesbudget. Danach entscheidet der Not-Aus, ob OpenRouter überhaupt gerufen wird.
+Verlauf und `shown_place_ids` kommen vom Client. `source` ist `llm` oder `fallback`. `ai_disclosure` kennzeichnet die KI. Ist der Not-Aus an, endet der Aufruf sofort mit dem Fallback und `CHAT_HALTED`. Token-Deckel und Tagesbudget greifen dann nicht. Sonst gelten vor dem Modell der Token-Deckel der IP (50.000 Tokens in 30 Tagen, sonst 429 `TOKEN_LIMIT`) und das globale Tagesbudget.
 
 **Was schickt `POST /feedback`?**  
 `{ "vote": "like" oder "dislike", "text": "" }`. `text` ist optional und höchstens 500 Zeichen. Ein anderes `vote` ist 422. Die Antwort ist `{ "ok": true }`.
@@ -173,7 +173,7 @@ Verlauf und `shown_place_ids` kommen vom Client. `source` ist `llm` oder `fallba
 `POST /admin/model` mit gültiger Sitzung. Ein unbekannter Name wird abgelehnt.
 
 **Wie setzt der Admin den Not-Aus?**  
-`POST /admin/halt` mit `{ "halt": true }` oder `{ "halt": false }` und gültiger Sitzung. `true` schreibt `chat_halt=on`.
+`POST /admin/halt` mit `{ "halt": true }` oder `{ "halt": false }` und gültiger Sitzung. `true` schreibt `chat_halt=on`. Ein anderer Wert ist 422. `GET /admin/stats` liefert `chat_halt`.
 
 **Was macht `GET /go/{place_id}`?**  
 Der Klick wird gezählt. Die Antwort ist ein Redirect 302 auf die Booking-Suche. Der Parameter `lang` wählt die Buchungssprache.
@@ -198,7 +198,7 @@ Reasoning ist aus. Sonst ist der Vertrag derselbe. Das Modell hat keine Werkzeug
 Der aktive Name ist markiert. Ein Punkt ist grün, wenn OpenRouter den Slug listet, rot sonst. Die Prüfung schaltet nichts um.
 
 **Was liefert `/chat`, wenn der Not-Aus an ist?**  
-Den bestehenden Fallback: 1–2 Atlas-Orte, fester mehrsprachiger Hinweis, `source` ist `fallback`. OpenRouter wird nicht gerufen. Das Ereignis trägt den Fehlercode `CHAT_HALTED`.
+Sofort den bestehenden Fallback: 1–2 Atlas-Orte, fester mehrsprachiger Hinweis, `source` ist `fallback`. OpenRouter wird nicht gerufen, das Tagesbudget wird nicht reserviert, und der Token-Deckel antwortet nicht mit 429. Das Ereignis trägt den Fehlercode `CHAT_HALTED`.
 
 **Was läuft während des Not-Aus weiter?**  
 `/match`, Atlas, Karte, Buchung und Feedback.
@@ -226,7 +226,7 @@ Sie setzt beim Öffnen `window.scrollTo(0, 0)`.
 `/impressum`, `/datenschutz` und `/disclaimer`, in `de`, `en`, `es` und `ru`. Eine juristische Prüfung ist damit nicht ersetzt.
 
 **Was zeigt `/admin` zusätzlich zur Statistik?**  
-Den Modellschalter, den Not-Aus und in den Rohdaten die Spalten Bewertung und Feedback. Langfuse erscheint nur, wenn die Schlüssel gesetzt sind.
+Den Modellschalter und darunter den Not-Aus. Bei Halt heißt die Schaltfläche „Chat wieder an“ und daneben steht „Chat ist aus“. In den Rohdaten gibt es die Spalten Bewertung und Feedback. Dieselbe Bedienung liegt in der HTML-Ansicht der API. Langfuse erscheint nur, wenn die Schlüssel gesetzt sind.
 
 ---
 
@@ -280,7 +280,7 @@ Der Feedback-Kanal (Eskalation E4) und der Not-Aus für `/chat` ohne neues Deplo
 Die juristische Prüfung der Rechtstexte. Die vollständige EAA-Einordnung. Der Vertrag mit OpenRouter und den beiden Anbietern. Außerdem die Eskalationen, die diese Fassung nicht anfasst: Playbook für einen stundenlangen Totalausfall, dauerhafte IP-Sperre, Beobachtung externer Modell-Abkündigungen, Alert beim GeoIP-Cron, Monitoring fehlschlagender Booking-Redirects.
 
 **Läuft der Not-Aus schon?**  
-Ja. `POST /admin/halt` schreibt `chat_halt`. Ist er `on`, antwortet `/chat` mit dem Fallback und ruft OpenRouter nicht auf.
+Ja, auf dem VPS. `POST /admin/halt` schreibt `chat_halt`. Ist er `on`, antwortet `/chat` sofort mit dem Fallback und ruft OpenRouter nicht auf.
 
 **Welche Fassung beschreibt die Anwendung?**  
 Spezifikation 3.1. Sie ersetzt 3.0 als Beschreibung. Die älteren Dokumente bleiben als Vorgänger im Ordner `docs/`.
