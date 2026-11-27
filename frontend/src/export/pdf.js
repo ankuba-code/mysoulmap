@@ -15,6 +15,8 @@ const INK = [42, 36, 32];
 const MUTED = [110, 100, 92];
 const RULE = [214, 208, 200];
 const MARGIN = 18;
+const SITE_LABEL = "app.mithertz.online";
+const SITE_URL = "https://app.mithertz.online";
 
 const COPY = {
   de: {
@@ -223,10 +225,52 @@ function useTextFont(doc) {
   doc.setFont(FONT, "normal");
 }
 
-export function createSoulmapPdf({ messages = [], disclosure = "", card = null, language = "de" } = {}) {
+function placesForPdf(messages, listed) {
+  const generated = placeBlocks(messages);
+  if (!listed?.length) {
+    return generated;
+  }
+  const notes = new Map(generated.filter((place) => place.id).map((place) => [place.id, place]));
+  const seen = new Set();
+  const blocks = [];
+  for (const place of listed) {
+    if (!place?.id || seen.has(place.id)) {
+      continue;
+    }
+    seen.add(place.id);
+    const note = notes.get(place.id);
+    blocks.push({
+      id: place.id,
+      name: place.name || note?.name || "",
+      country: place.country || note?.country || "",
+      flagCountry: place.flagCountry || note?.flagCountry || "",
+      primaervibration: place.primaervibration || note?.primaervibration || "",
+      correspondence: place.correspondence || note?.correspondence || "",
+      reasons: place.reasons?.length ? place.reasons : note?.reasons || [],
+      booking_link: place.booking_link || note?.booking_link || "",
+      booking_url: place.booking_url || note?.booking_url || "",
+      text: note?.text || "",
+    });
+  }
+  for (const place of generated) {
+    if (!place.id || seen.has(place.id)) {
+      continue;
+    }
+    blocks.push(place);
+  }
+  return blocks;
+}
+
+export function createSoulmapPdf({
+  messages = [],
+  disclosure = "",
+  card = null,
+  language = "de",
+  places: listedPlaces = [],
+} = {}) {
   const lang = COPY[card?.language || language] ? card?.language || language : "de";
   const copy = pdfCopy(lang);
-  const places = placeBlocks(messages);
+  const places = placesForPdf(messages, listedPlaces);
   const notes = noteBlocks(messages);
   if (!places.length && !notes.length && !card) {
     throw new Error(copy.empty);
@@ -938,12 +982,16 @@ function drawFooter(doc, disclosure, page) {
   doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
   const label = String(page);
   const labelWidth = doc.getTextWidth(label);
+  const siteWidth = doc.getTextWidth(SITE_LABEL);
+  const siteX = (pageWidth - siteWidth) / 2;
   const note = pdfSafe(disclosure);
   if (note) {
-    const lines = linesOf(doc, note, pageWidth - MARGIN * 2 - labelWidth - 6);
+    const lines = linesOf(doc, note, Math.max(24, siteX - MARGIN - 4));
     if (lines[0]) {
       doc.text(lines[0], MARGIN, y);
     }
   }
+  doc.text(SITE_LABEL, siteX, y);
+  doc.link(siteX, y - 3, siteWidth, 4, { url: SITE_URL });
   doc.text(label, pageWidth - MARGIN - labelWidth, y);
 }

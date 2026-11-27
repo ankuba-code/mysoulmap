@@ -222,6 +222,43 @@ describe("ResultsPage", () => {
     expect(assistant.scrollIntoView).not.toHaveBeenCalled();
   });
 
+  it("lists the two further matches under the first three places", () => {
+    saveRitual({
+      language: "de",
+      answers: {},
+      result: {
+        anima_card: {
+          archetype_symbol: "triangle",
+          element: "earth",
+          inner_rhythm: "rise",
+          emotional_intensity: 7,
+          travel_direction: "outward",
+          dominant_frequency: "Stille",
+        },
+        matches: ["Machu Picchu", "Sedona", "Uluru", "Kyoto", "Petra"].map((name, index) => ({
+          id: `p${index}`,
+          name,
+          country: "Land",
+          coordinates: { lat: index, lng: index },
+          primaervibration: "",
+          correspondence: "",
+          booking_link: `/go/p${index}`,
+          score: 80 - index,
+          reasons: [],
+        })),
+      },
+    });
+    render(
+      <MemoryRouter>
+        <ResultsPage />
+      </MemoryRouter>,
+    );
+    const headings = screen.getAllByRole("heading", { level: 3 }).map((node) => node.textContent);
+    expect(headings.slice(0, 3)).toEqual(["Machu Picchu", "Sedona", "Uluru"]);
+    expect(screen.getByText("Weitere Empfehlungen")).toBeInTheDocument();
+    expect(headings.slice(3, 5)).toEqual(["Kyoto", "Petra"]);
+  });
+
   it("draws the GeoLite2 area on the map", async () => {
     vi.stubGlobal(
       "fetch",
@@ -372,8 +409,10 @@ describe("ResultsPage", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 
     releaseGeo();
-    expect(await screen.findByRole("dialog")).toHaveTextContent("Hier spricht eine KI");
-    expect(screen.getByText(/künstliche Intelligenz/)).toBeInTheDocument();
+    expect(await screen.findByRole("dialog")).toHaveTextContent("Ab hier verwenden wir unsere SoulMap KI");
+    expect(screen.getByText(/Booking.com-Link/)).toBeInTheDocument();
+    expect(screen.getByText(/viel Spaß beim Entdecken/)).toBeInTheDocument();
+    expect(screen.getByText(/bevor du das PDF speicherst/)).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Verstanden" }));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();

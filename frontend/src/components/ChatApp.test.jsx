@@ -78,10 +78,23 @@ describe("ChatApp", () => {
       source: "llm",
       ai_disclosure: false,
     });
-    render(<ChatApp embedded fromRitual seedPrompt="Vertiefe nur diesen einen Atlas-Ort. Ort: Machu Picchu." />);
+    render(
+      <ChatApp
+        embedded
+        fromRitual
+        focusPlaceId="mp"
+        seedPrompt="Vertiefe nur diesen einen Atlas-Ort. Ort: Machu Picchu."
+      />,
+    );
     expect(await screen.findByText("Früh auf den Berg.")).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Zu allen drei Orten" })).not.toBeInTheDocument();
     expect(screen.queryByText("Anreise über Lima.")).not.toBeInTheDocument();
+    expect(postChat).toHaveBeenCalledWith(
+      expect.objectContaining({
+        prompt_catalog: "place",
+        focus_place_id: "mp",
+      }),
+    );
   });
 
   it("shows the shared-place hint once and skips a repeated overview", async () => {
@@ -137,6 +150,7 @@ describe("ChatApp", () => {
       />,
     );
     await user.click(screen.getByRole("button", { name: "Mehr zu diesen Orten" }));
+    expect(postChat).toHaveBeenCalledWith(expect.objectContaining({ prompt_catalog: "element" }));
     expect(await screen.findByRole("heading", { name: "Zu allen drei Orten" })).toBeInTheDocument();
     expect(screen.getAllByText(hint)).toHaveLength(2);
     expect(screen.getByRole("textbox")).toHaveAttribute("aria-describedby", "place-details-hint");

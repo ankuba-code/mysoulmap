@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
-import { fetchStats, loginAdmin, logoutAdmin } from "./api";
+import { fetchStats, loginAdmin, logoutAdmin, switchChatModel } from "./api";
 import AdminLogin from "./AdminLogin";
 import { ChartPanel, FallbackPanel, LangfusePanel, MonthPanel, OriginPanel, OverviewPanel, PlacesPanel, RawPanel } from "./AdminCharts";
+
+const CHAT_MODELS = [
+  { id: "gpt-5-mini", label: "gpt-5-mini" },
+  { id: "claude-haiku-5-5", label: "Claude Haiku 5.5" },
+];
 
 const SECTIONS = [
   { id: "overview", label: "Übersicht" },
@@ -63,6 +68,32 @@ export default function AdminApp() {
     setNeedsLogin(true);
   }
 
+  async function onModel(model) {
+    setBusy(true);
+    setError("");
+    try {
+      const result = await switchChatModel(model);
+      setStats((current) =>
+        current
+          ? {
+              ...current,
+              chat_model: result.model || model,
+              chat_model_reachable:
+                typeof result.reachable === "boolean" ? result.reachable : current.chat_model_reachable,
+            }
+          : current,
+      );
+    } catch (err) {
+      if (err.code === "UNAUTHORIZED") {
+        setNeedsLogin(true);
+        return;
+      }
+      setError(err instanceof Error ? err.message : "Das Chat-Modell konnte nicht gewechselt werden.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function onRawConfirm() {
     setBusy(true);
     setError("");
@@ -112,6 +143,34 @@ export default function AdminApp() {
           </div>
         </header>
         {error ? <p className="text-sm text-rose-700">{error}</p> : null}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm text-stone-500">Chat-Modell</span>
+          {CHAT_MODELS.map((option) => {
+            const active = (stats.chat_model || "gpt-5-mini") === option.id;
+            return (
+              <button
+                key={option.id}
+                type="button"
+                disabled={busy || active}
+                onClick={() => onModel(option.id)}
+                className={`inline-flex items-center rounded-lg px-3 py-2 text-sm ${
+                  active ? "bg-amber-700 text-white" : "bg-white ring-1 ring-stone-200"
+                } disabled:opacity-80`}
+              >
+                {option.label}
+                {active && typeof stats.chat_model_reachable === "boolean" ? (
+                  <span
+                    aria-hidden="true"
+                    title={stats.chat_model_reachable ? "erreichbar" : "nicht erreichbar"}
+                    className={`ml-2 inline-block h-2.5 w-2.5 rounded-full ${
+                      stats.chat_model_reachable ? "bg-emerald-400" : "bg-rose-400"
+                    }`}
+                  />
+                ) : null}
+              </button>
+            );
+          })}
+        </div>
         <nav className="flex flex-wrap gap-2">
           {(stats.langfuse
             ? [SECTIONS[0], { id: "langfuse", label: "Langfuse" }, ...SECTIONS.slice(1)]

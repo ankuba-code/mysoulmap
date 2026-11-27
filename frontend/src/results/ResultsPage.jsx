@@ -123,6 +123,9 @@ function ResultsBody({ stored }) {
   const mapped = places.filter(
     (place) => place.coordinates && Number.isFinite(place.coordinates.lat) && Number.isFinite(place.coordinates.lng),
   );
+  const rankedPlaces = places.filter((place) => !place.fromChat);
+  const primaryPlaces = rankedPlaces.slice(0, 3);
+  const furtherPlaces = [...rankedPlaces.slice(3), ...places.filter((place) => place.fromChat)];
 
   function onLanguage(next) {
     saveLanguage(next);
@@ -183,64 +186,38 @@ function ResultsBody({ stored }) {
         <section>
           <p className="font-mono text-[10px] tracking-[0.18em] text-white/60 uppercase">{copy.poisTitle}</p>
           <div className="mt-4 space-y-6">
-            {places.map((place) => (
-              <article key={place.id} className="border-b border-white/25 pb-5">
-                <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
-                <div className="flex items-start gap-3">
-                  <BookingQr place={place} language={language} label={booking.booking} />
-                  <div className="min-w-0">
-                    <h3 className="font-serif text-[22px] italic">{place.name}</h3>
-                    <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-white/80">
-                      <CountryLabel country={place.country} flagCountry={place.flagCountry} />
-                      {place.primaervibration ? (
-                        <span className="font-mono text-[10px] tracking-[0.12em] text-white/55">
-                          {place.country ? "· " : ""}
-                          {place.primaervibration}
-                        </span>
-                      ) : null}
-                    </p>
-                  </div>
-                </div>
-                  <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
-                    <button
-                      type="button"
-                      onClick={() => setPanel({ place, mode: "map" })}
-                      className="rounded-full border border-white/40 px-3 py-2 text-center text-[12px] sm:px-4"
-                    >
-                      {copy.showTerrain}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setPanel({ place, mode: "detail" })}
-                      className="rounded-full border border-white/40 px-3 py-2 text-center text-[12px] sm:px-4"
-                    >
-                      {copy.moreAbout}
-                    </button>
-                  </div>
-                </div>
-                {place.correspondence ? <p className="mt-2 text-[13px] italic text-white/75">{place.correspondence}</p> : null}
-                {place.reasons?.length ? (
-                  <div className="mt-3">
-                    <p className="font-mono text-[10px] tracking-[0.12em] text-white/50 uppercase">{copy.whyPlace}</p>
-                    <ul className="mt-2 list-disc space-y-1 pl-5 text-[12px] italic text-white/70">
-                      {place.reasons.slice(0, 3).map((reason) => (
-                        <li key={`${place.id}-${reason.dimension}`}>{reasonText(copy, reason, place, card)}</li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : null}
-                <a
-                  href={goHref(place.booking_link, language)}
-                  target="_blank"
-                  rel="sponsored nofollow noopener"
-                  className="mt-3 inline-flex items-center gap-2 text-[12px] text-white/80 underline-offset-4 hover:underline"
-                >
-                  <span className="font-mono text-[10px] tracking-[0.12em] uppercase">{booking.ad}</span>
-                  {booking.booking}
-                </a>
-              </article>
+            {primaryPlaces.map((place) => (
+              <PlaceArticle
+                key={place.id}
+                place={place}
+                copy={copy}
+                booking={booking}
+                card={card}
+                language={language}
+                onTerrain={() => setPanel({ place, mode: "map" })}
+                onDetail={() => setPanel({ place, mode: "detail" })}
+              />
             ))}
           </div>
+          {furtherPlaces.length ? (
+            <div className="mt-8">
+              <p className="font-mono text-[10px] tracking-[0.18em] text-white/60 uppercase">{copy.ctaMorePlaces}</p>
+              <div className="mt-4 space-y-6">
+                {furtherPlaces.map((place) => (
+                  <PlaceArticle
+                    key={place.id}
+                    place={place}
+                    copy={copy}
+                    booking={booking}
+                    card={card}
+                    language={language}
+                    onTerrain={() => setPanel({ place, mode: "map" })}
+                    onDetail={() => setPanel({ place, mode: "detail" })}
+                  />
+                ))}
+              </div>
+            </div>
+          ) : null}
         </section>
 
         <section>
@@ -275,6 +252,7 @@ function ResultsBody({ stored }) {
               ctaMorePlaces: copy.ctaMorePlaces,
             }}
             onRecommendedPlaces={mergeChatPlaces}
+            resultPlaces={places}
           />
         </div>
       </section>
@@ -282,7 +260,7 @@ function ResultsBody({ stored }) {
       {panel ? (
         <TerrainShadowbox
           place={panel.place}
-          places={mapped}
+          places={mapped.filter((item) => item.id === panel.place.id)}
           origin={origin}
           originLabel={copy.origin}
           closeLabel={copy.close}
@@ -296,7 +274,8 @@ function ResultsBody({ stored }) {
               initialLanguage={language}
               fromRitual
               ritualContext={context}
-              seedPrompt={copy.promptOnePlace.replace("{name}", panel.place.name)}
+              seedPrompt={`${copy.promptOnePlace.replace("{name}", panel.place.name)} place_id: ${panel.place.id}`}
+              focusPlaceId={panel.place.id}
               onRecommendedPlaces={mergeChatPlaces}
             />
           ) : null}
@@ -308,5 +287,65 @@ function ResultsBody({ stored }) {
         </Link>
       </p>
     </RitualShell>
+  );
+}
+
+function PlaceArticle({ place, copy, booking, card, language, onTerrain, onDetail }) {
+  return (
+    <article className="border-b border-white/25 pb-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
+        <div className="flex items-start gap-3">
+          <BookingQr place={place} language={language} label={booking.booking} />
+          <div className="min-w-0">
+            <h3 className="font-serif text-[22px] italic">{place.name}</h3>
+            <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-white/80">
+              <CountryLabel country={place.country} flagCountry={place.flagCountry} />
+              {place.primaervibration ? (
+                <span className="font-mono text-[10px] tracking-[0.12em] text-white/55">
+                  {place.country ? "· " : ""}
+                  {place.primaervibration}
+                </span>
+              ) : null}
+            </p>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+          <button
+            type="button"
+            onClick={onTerrain}
+            className="rounded-full border border-white/40 px-3 py-2 text-center text-[12px] sm:px-4"
+          >
+            {copy.showTerrain}
+          </button>
+          <button
+            type="button"
+            onClick={onDetail}
+            className="rounded-full border border-white/40 px-3 py-2 text-center text-[12px] sm:px-4"
+          >
+            {copy.moreAbout}
+          </button>
+        </div>
+      </div>
+      {place.correspondence ? <p className="mt-2 text-[13px] italic text-white/75">{place.correspondence}</p> : null}
+      {place.reasons?.length ? (
+        <div className="mt-3">
+          <p className="font-mono text-[10px] tracking-[0.12em] text-white/50 uppercase">{copy.whyPlace}</p>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-[12px] italic text-white/70">
+            {place.reasons.slice(0, 3).map((reason) => (
+              <li key={`${place.id}-${reason.dimension}`}>{reasonText(copy, reason, place, card)}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      <a
+        href={goHref(place.booking_link, language)}
+        target="_blank"
+        rel="sponsored nofollow noopener"
+        className="mt-3 inline-flex items-center gap-2 text-[12px] text-white/80 underline-offset-4 hover:underline"
+      >
+        <span className="font-mono text-[10px] tracking-[0.12em] uppercase">{booking.ad}</span>
+        {booking.booking}
+      </a>
+    </article>
   );
 }

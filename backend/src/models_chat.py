@@ -31,7 +31,7 @@ class RitualContext(BaseModel):
     emotional_intensity: int = Field(ge=1, le=10)
     travel_direction: str = Field(min_length=1, max_length=40)
     dominant_frequency: str = Field(min_length=1, max_length=400)
-    matched_place_ids: list[str] = Field(default_factory=list, max_length=3)
+    matched_place_ids: list[str] = Field(default_factory=list, max_length=5)
     lines: list[str] = Field(default_factory=list, max_length=8)
 
     @field_validator("lines")
@@ -54,6 +54,8 @@ class ChatRequest(BaseModel):
     language: Literal["de", "es", "en", "ru"] = "de"
     from_ritual: bool = False
     ritual_context: RitualContext | None = None
+    prompt_catalog: Literal["atlas", "element", "place"] = "atlas"
+    focus_place_id: str | None = None
 
     @field_validator("shown_place_ids")
     @classmethod
@@ -62,6 +64,16 @@ class ChatRequest(BaseModel):
             if not item or len(item) > MAX_PLACE_ID_LENGTH:
                 raise ValueError("Ungültige place_id")
         return values
+
+    @field_validator("focus_place_id")
+    @classmethod
+    def valid_focus_id(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        text = value.strip()
+        if not text or len(text) > MAX_PLACE_ID_LENGTH:
+            raise ValueError("Ungültige place_id")
+        return text
 
     @model_validator(mode="after")
     def require_user_message(self) -> "ChatRequest":

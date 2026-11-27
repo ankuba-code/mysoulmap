@@ -224,6 +224,36 @@ def _langfuse_section(payload: dict) -> str:
     """
 
 
+def _model_section(payload: dict) -> str:
+    current = str(payload.get("chat_model") or "gpt-5-mini")
+    options = (
+        ("gpt-5-mini", "gpt-5-mini"),
+        ("claude-haiku-5-5", "Claude Haiku 5.5"),
+    )
+    reachable = bool(payload.get("chat_model_reachable"))
+    mark = " ok" if reachable else ""
+    status = "erreichbar" if reachable else "nicht erreichbar"
+    buttons = []
+    for model_id, label in options:
+        if model_id == current:
+            buttons.append(
+                f'<button type="button" disabled>{escape(label)}'
+                f'<span class="dot{mark}" title="{status}"></span></button>'
+            )
+            continue
+        buttons.append(
+            "<form method=\"post\" action=\"/admin/model\">"
+            f'<input type="hidden" name="model" value="{escape(model_id, quote=True)}">'
+            f"<button type=\"submit\">{escape(label)}</button>"
+            "</form>"
+        )
+    return (
+        "<section class=\"tools\">"
+        f"<span>Chat-Modell</span>{''.join(buttons)}"
+        "</section>"
+    )
+
+
 def stats_page(payload: dict) -> str:
     llm = payload.get("llm_monitoring") or {}
     window_label = _window_label(llm)
@@ -250,6 +280,8 @@ def stats_page(payload: dict) -> str:
                 "error_code",
                 "ip_address",
                 "user_prompt",
+                "feedback_vote",
+                "feedback_text",
             )
         )
         + "</tr>"
@@ -259,8 +291,8 @@ def stats_page(payload: dict) -> str:
         f"""
         <h2>Rohdaten</h2>
         <table>
-          <tr><th>ID</th><th>Typ</th><th>Zeit</th><th>Land</th><th>OS-Sprache</th><th>Ort</th><th>LLM</th><th>Fehler</th><th>IP</th><th>Prompt</th></tr>
-          {raw_rows or "<tr><td colspan='10'>Keine Events</td></tr>"}
+          <tr><th>ID</th><th>Typ</th><th>Zeit</th><th>Land</th><th>OS-Sprache</th><th>Ort</th><th>LLM</th><th>Fehler</th><th>IP</th><th>Prompt</th><th>Bewertung</th><th>Feedback</th></tr>
+          {raw_rows or "<tr><td colspan='12'>Keine Events</td></tr>"}
         </table>
         """
         if events
@@ -289,6 +321,9 @@ def stats_page(payload: dict) -> str:
     table {{ width: 100%; border-collapse: collapse; background: #fff; }}
     th, td {{ text-align: left; padding: 0.45rem 0.6rem; border-bottom: 1px solid #e7e5e4; font-size: 0.92rem; }}
     button {{ padding: 0.4rem 0.7rem; border: 0; border-radius: 0.4rem; background: #1c1917; color: #fff; }}
+    button:disabled {{ background: #b45309; }}
+    .dot {{ display: inline-block; width: 0.55rem; height: 0.55rem; margin-left: 0.45rem; border-radius: 999px; background: #e11d48; vertical-align: middle; }}
+    .dot.ok {{ background: #16a34a; }}
     .tools {{ display: flex; align-items: center; gap: 0.75rem; }}
     .tools a {{ color: #1c1917; }}
   </style>
@@ -305,6 +340,7 @@ def stats_page(payload: dict) -> str:
         <form method="post" action="/admin/logout"><button type="submit">Abmelden</button></form>
       </div>
     </header>
+    {_model_section(payload)}
     {budget}
     {langfuse}
     <section class="cards">

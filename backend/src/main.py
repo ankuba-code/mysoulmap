@@ -6,11 +6,13 @@ import time
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from urllib.parse import parse_qs
+from typing import Literal
+
 from fastapi import FastAPI, Query, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
-from pydantic import BaseModel, ConfigDict, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 from slowapi.errors import RateLimitExceeded
 from sqlmodel import Session
 
@@ -32,6 +34,8 @@ from .admin_pages import login_page, stats_page
 from .atlas import PLACES, Place, filter_places, get_place_by_id
 from .budget import attach_budget_signal, estimate_chat_tokens, get_book
 from .chat import fallback_response, run_chat
+from .chat_model import CHAT_MODELS, active_chat_model, set_chat_model
+from .model_status import model_reachable
 from .llm import flush_langfuse, langfuse_project_url
 from .langfuse_metrics import fetch_langfuse_widgets
 from .db import database_ok, get_database_url, get_engine, init_db
@@ -40,6 +44,7 @@ from .events import (
     client_ip,
     log_affiliate_click,
     log_chat_events,
+    log_feedback,
     log_match_events,
     log_rate_limited,
     ui_language_from_header,
@@ -50,11 +55,13 @@ from .match import MatchRequest, MatchResponse, match_places, q7_lookup_query
 from .logging_config import ACCESS_LOGGER, configure_logging
 from .models_chat import ChatRequest, ChatResponse
 from .models_events import UsageEvent  # noqa: F401
+from .models_settings import AppSetting  # noqa: F401
 from .purge import run_purge
 from .rate_limit import (
     LIMIT_ADMIN_LOGIN,
     LIMIT_ADMIN_STATS,
     LIMIT_CHAT,
+    LIMIT_FEEDBACK,
     LIMIT_GEO,
     LIMIT_GO,
     LIMIT_MATCH,
@@ -278,6 +285,25 @@ def match(request: Request, body: MatchRequest) -> MatchResponse:
     return response
 
 
+class FeedbackRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    vote: Literal["like", "dislike"]
+    text: str = Field(default="", max_length=500)
+
+    @field_validator("text")
+    @classmethod
+    def clip_text(cls, value: str) -> str:
+        return value.strip()
+
+
+@app.post("/feedback")
+@limiter.limit(LIMIT_FEEDBACK)
+def feedback(request: Request, body: FeedbackRequest) -> dict[str, bool]:
+    log_feedback(request, body.vote, body.text)
+    return {"ok": True}
+
+
 @app.post("/chat", response_model=ChatResponse)
 @limiter.limit(LIMIT_CHAT)
 async def chat(request: Request, body: ChatRequest) -> ChatResponse:
@@ -382,6 +408,8 @@ def admin_page(request: Request, raw: bool = False):
         start, end = default_period(datetime.now(timezone.utc).replace(tzinfo=None))
         with Session(get_engine()) as session:
             payload = _with_langfuse(attach_charts(aggregate_stats(session, start, end, raw=raw)))
+            payload["chat_model"] = active_chat_model(session)
+            payload["chat_model_reachable"] = model_reachable(payload["chat_model"])
             return HTMLResponse(stats_page(payload))
     return HTMLResponse(login_page())
 
@@ -433,6 +461,45 @@ async def admin_logout(request: Request, response: Response):
     return {"ok": True}
 
 
+@app.post("/admin/model")
+@limiter.limit(LIMIT_ADMIN_STATS)
+async def admin_model(request: Request):
+    token = request.cookies.get(COOKIE_NAME)
+    if not is_admin_session(token):
+        if _is_form_request(request):
+            return RedirectResponse("/admin/login", status_code=303)
+        return JSONResponse(
+            status_code=401,
+            content=error_payload("UNAUTHORIZED", "Admin-Anmeldung erforderlich."),
+        )
+    model_id: str | None
+    if _is_form_request(request):
+        parsed = parse_qs((await request.body()).decode("utf-8"), keep_blank_values=True)
+        model_id = (parsed.get("model") or [""])[0]
+        html_mode = True
+    else:
+        try:
+            body = await request.json()
+        except Exception:
+            body = {}
+        raw_model = body.get("model") if isinstance(body, dict) else None
+        model_id = raw_model if isinstance(raw_model, str) else None
+        html_mode = False
+    if model_id not in CHAT_MODELS:
+        if html_mode:
+            return RedirectResponse("/admin", status_code=303)
+        return JSONResponse(
+            status_code=422,
+            content=error_payload("VALIDATION_ERROR", "Unbekanntes Chat-Modell."),
+        )
+    with Session(get_engine()) as session:
+        selected = set_chat_model(session, model_id)
+    reachable = model_reachable(selected)
+    if html_mode:
+        return RedirectResponse("/admin", status_code=303)
+    return {"model": selected, "reachable": reachable}
+
+
 @app.get("/admin/stats")
 @limiter.limit(LIMIT_ADMIN_STATS)
 def admin_stats(
@@ -447,4 +514,7 @@ def admin_stats(
         )
     start, end = default_period(datetime.now(timezone.utc).replace(tzinfo=None))
     with Session(get_engine()) as session:
-        return _with_langfuse(attach_charts(aggregate_stats(session, start, end, raw=raw)))
+        payload = _with_langfuse(attach_charts(aggregate_stats(session, start, end, raw=raw)))
+        payload["chat_model"] = active_chat_model(session)
+        payload["chat_model_reachable"] = model_reachable(payload["chat_model"])
+        return payload

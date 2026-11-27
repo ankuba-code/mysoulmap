@@ -8,6 +8,7 @@ from .models_chat import ChatRequest
 
 OUTPUT_RESERVE_TOKENS = 800
 SUBNET_SHARE = 0.1
+SESSION_HOUR_TOKENS = 80_000
 TIGHT_RATIO = 0.8
 DAY_TTL_SECONDS = 2 * 24 * 60 * 60
 HOUR_TTL_SECONDS = 3 * 60 * 60
@@ -46,7 +47,10 @@ class Reservation:
 def current_limits() -> BudgetLimits:
     daily = _positive("GLOBAL_DAILY_TOKEN_LIMIT", 500_000)
     hourly_raw = os.getenv("GLOBAL_HOURLY_TOKEN_LIMIT", "").strip()
-    hourly = _positive("GLOBAL_HOURLY_TOKEN_LIMIT", max(1, daily // 24)) if hourly_raw else max(1, daily // 24)
+    if hourly_raw:
+        hourly = _positive("GLOBAL_HOURLY_TOKEN_LIMIT", max(1, daily // 24))
+    else:
+        hourly = min(daily, max(SESSION_HOUR_TOKENS, max(1, daily // 24)))
     calls = _positive("GLOBAL_LLM_CALLS_PER_MINUTE", 30)
     return BudgetLimits(daily=daily, hourly=hourly, calls_per_minute=calls)
 
@@ -101,8 +105,8 @@ def plan_reserve(
         return False, "GLOBAL_TOKEN_LIMIT", {}
     if hour_used + tokens > limits.hourly:
         return False, "GLOBAL_TOKEN_LIMIT", {}
-    subnet_limit = max(1, int(limits.hourly * SUBNET_SHARE))
-    if current.get(keys.subnet, 0) + tokens > subnet_limit:
+    share = limits.hourly if recent_user else max(1, int(limits.hourly * SUBNET_SHARE))
+    if current.get(keys.subnet, 0) + tokens > share:
         return False, "SUBNET_LIMIT", {}
     return True, None, {
         keys.day: tokens,

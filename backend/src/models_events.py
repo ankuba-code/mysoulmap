@@ -10,6 +10,7 @@ class EventType(str, enum.Enum):
     result_view = "result_view"
     affiliate_click = "affiliate_click"
     rate_limited = "rate_limited"
+    chat_feedback = "chat_feedback"
 
 
 class LlmStatus(str, enum.Enum):
@@ -44,3 +45,5 @@ class UsageEvent(SQLModel, table=True):
     )
     error_code: str | None = Field(default=None, max_length=50)
     user_prompt: str | None = Field(default=None, max_length=500)
+    feedback_vote: str | None = Field(default=None, max_length=8)
+    feedback_text: str | None = Field(default=None, max_length=500)

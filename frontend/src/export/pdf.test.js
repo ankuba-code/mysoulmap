@@ -144,6 +144,8 @@ describe("exportPdf", () => {
     expect(rect.mock.calls.length).toBeGreaterThan(20);
     expect(link.mock.calls.some((call) => String(call[4]?.url).startsWith("https://www.booking.com/"))).toBe(true);
     expect(written).toContain("Azoren - Vertiefung.");
+    expect(written).toContain("app.mithertz.online");
+    expect(link.mock.calls.some((call) => call[4]?.url === "https://app.mithertz.online")).toBe(true);
     expect(written).not.toMatch(/[\u2013\u2014\u201E]/);
     expect(new Set(setFont.mock.calls.map((call) => call[0]))).toEqual(new Set(["NotoSans"]));
     expect(addFont).toHaveBeenCalledWith("NotoSans-Regular.ttf", "NotoSans", "normal");
@@ -194,6 +196,36 @@ describe("exportPdf", () => {
     expect(written).toContain("Gemeinsame Anreise.");
     expect(written).not.toContain("NICHT-DOPPELN");
     expect(line.mock.calls.length).toBeGreaterThan(before);
+  });
+
+  it("prints every results place and keeps the generated note", () => {
+    exportPdf({
+      messages: [
+        {
+          role: "assistant",
+          sections: [
+            {
+              kind: "place",
+              text: "Anreise über den Hafen.",
+              placeId: "azores",
+              name: "Azoren",
+              country: "Portugal",
+            },
+          ],
+        },
+      ],
+      places: [
+        { id: "azores", name: "Azoren", country: "Portugal", booking_link: "/go/azores" },
+        { id: "sedona", name: "Sedona", country: "USA", booking_link: "/go/sedona" },
+        { id: "kyoto", name: "Kyoto", country: "Japan", booking_link: "/go/kyoto" },
+      ],
+      language: "de",
+    });
+    const written = text.mock.calls.map((call) => call[0]).join("\n");
+    expect(written.indexOf("Azoren")).toBeLessThan(written.indexOf("Sedona"));
+    expect(written.indexOf("Sedona")).toBeLessThan(written.indexOf("Kyoto"));
+    expect(written).toContain("Anreise über den Hafen.");
+    expect(written).toContain("Japan");
   });
 
   it("leaves out the notice that the assistant is unavailable", () => {

@@ -7,7 +7,7 @@ from .atlas import Place
 from .booking import booking_search_url
 from .fallback import fallback_message, fallback_place_ids
 from .place_i18n import localized_name
-from .llm import LlmCallError, complete_llm, pop_llm_usage
+from .llm import LlmCallError, complete_llm, output_token_cap, pop_llm_usage
 from .models_chat import (
     MAX_MESSAGE_LENGTH,
     ChatMessage,
@@ -18,7 +18,7 @@ from .models_chat import (
     PlaceNote,
     RecommendedPlace,
 )
-from .prompts import build_system_prompt
+from .prompts import build_system_prompt, select_prompt_places
 
 LlmComplete = Callable[..., Awaitable[LlmOutput]]
 ChatSource = Literal["llm", "fallback"]
@@ -167,8 +167,9 @@ async def _llm_turn(
     *,
     strict: bool,
 ) -> LlmOutput | None:
+    chosen = select_prompt_places(places, request)
     system_prompt = build_system_prompt(
-        places,
+        chosen,
         language=request.language,
         shown_place_ids=request.shown_place_ids,
         ritual_context=request.ritual_context,
@@ -176,7 +177,11 @@ async def _llm_turn(
         strict=strict,
     )
     try:
-        output = await llm(system_prompt=system_prompt, messages=request.messages)
+        output = await llm(
+            system_prompt=system_prompt,
+            messages=request.messages,
+            max_tokens=output_token_cap(len(chosen)),
+        )
     except LlmCallError as exc:
         if exc.code == "LLM_RESPONSE_INVALID":
             return None

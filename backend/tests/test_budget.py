@@ -44,6 +44,23 @@ def test_same_subnet_shares_ten_percent_of_the_hour(monkeypatch) -> None:
     assert other.ok is True
 
 
+def test_recent_user_continues_after_the_atlas_prompt_fills_the_subnet_share(monkeypatch) -> None:
+    book = _limits(monkeypatch, hourly=10_000)
+    opened = book.try_reserve(ip="10.9.0.1", tokens=500, now=NOW, recent_user=False)
+    assert opened.ok is True
+    book.adjust(opened, 2500)
+    blocked = book.try_reserve(ip="10.9.0.2", tokens=200, now=NOW, recent_user=False)
+    assert blocked.code == "SUBNET_LIMIT"
+    continued = book.try_reserve(ip="10.9.0.1", tokens=200, now=NOW, recent_user=True)
+    assert continued.ok is True
+
+
+def test_unset_hourly_limit_fits_several_place_details(monkeypatch) -> None:
+    monkeypatch.setenv("GLOBAL_DAILY_TOKEN_LIMIT", "500000")
+    monkeypatch.delenv("GLOBAL_HOURLY_TOKEN_LIMIT", raising=False)
+    assert current_limits().hourly == 80_000
+
+
 def test_fresh_ip_stops_at_eighty_percent_of_the_hour(monkeypatch) -> None:
     book = _limits(monkeypatch, hourly=100)
     for index in range(8):

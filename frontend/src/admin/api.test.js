@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fetchStats, loginAdmin } from "./api";
+import { fetchStats, loginAdmin, switchChatModel } from "./api";
 
 describe("admin api", () => {
   beforeEach(() => {
@@ -17,6 +17,21 @@ describe("admin api", () => {
       credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username: "aku", password: "secret" }),
+    });
+  });
+
+  it("posts the selected chat model", async () => {
+    fetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ model: "claude-haiku-5-5" }),
+    });
+    await switchChatModel("claude-haiku-5-5");
+    expect(fetch).toHaveBeenCalledWith("/api/admin/model", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ model: "claude-haiku-5-5" }),
     });
   });
 

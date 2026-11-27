@@ -319,6 +319,8 @@ export function RawPanel({ events, onConfirm, confirmed, busy }) {
             <th className="py-2 pr-3">Status</th>
             <th className="py-2 pr-3">IP</th>
             <th className="py-2 pr-3">Prompt</th>
+            <th className="py-2 pr-3">Bewertung</th>
+            <th className="py-2 pr-3">Feedback</th>
           </tr>
         </thead>
         <tbody>
@@ -332,6 +334,8 @@ export function RawPanel({ events, onConfirm, confirmed, busy }) {
               <td className="py-2 pr-3">{event.llm_status || event.error_code || "—"}</td>
               <td className="py-2 pr-3">{event.ip_address}</td>
               <td className="py-2 pr-3">{event.user_prompt || "—"}</td>
+              <td className="py-2 pr-3">{event.feedback_vote || "—"}</td>
+              <td className="py-2 pr-3">{event.feedback_text || "—"}</td>
             </tr>
           ))}
         </tbody>

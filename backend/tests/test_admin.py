@@ -160,6 +160,27 @@ def test_stats_raw_includes_ip() -> None:
     assert all("user_prompt" in item for item in events)
 
 
+def test_admin_switches_chat_model() -> None:
+    client.cookies.clear()
+    denied = client.post("/admin/model", json={"model": "claude-haiku-5-5"})
+    assert denied.status_code == 401
+    assert _login().status_code == 200
+    switched = client.post("/admin/model", json={"model": "claude-haiku-5-5"})
+    assert switched.status_code == 200
+    assert switched.json()["model"] == "claude-haiku-5-5"
+    assert switched.json()["reachable"] is False
+    stats = client.get("/admin/stats")
+    assert stats.json()["chat_model"] == "claude-haiku-5-5"
+    page = client.get("/admin")
+    assert "Claude Haiku 5.5" in page.text
+    assert 'title="nicht erreichbar"' in page.text
+    assert stats.json()["chat_model_reachable"] is False
+    assert 'value="gpt-5-mini"' in page.text
+    unknown = client.post("/admin/model", json={"model": "other"})
+    assert unknown.status_code == 422
+    client.post("/admin/model", json={"model": "gpt-5-mini"})
+
+
 def test_logout_invalidates_session() -> None:
     assert _login().status_code == 200
     assert client.post("/admin/logout").status_code == 200

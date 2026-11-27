@@ -1,6 +1,8 @@
 import ReactMarkdown from "react-markdown";
+import bookingWordmark from "../assets/booking-wordmark.png";
 import { goHref } from "../chat/goHref";
 import FallbackNotice from "./FallbackNotice";
+import FeedbackBar from "./FeedbackBar";
 import BookingQr from "./BookingQr";
 import CountryLabel from "./CountryLabel";
 import PlaceList from "./PlaceList";
@@ -21,16 +23,33 @@ const PLACE_TONES = [
   },
 ];
 
-export default function ChatMessage({ message, copy, language, ritual = false, hideOverview = false }) {
+export default function ChatMessage({ message, copy, language, ritual = false, hideOverview = false, onlyPlaceId = "" }) {
   const isUser = message.role === "user";
-  const sections = hideOverview
+  const sections = (hideOverview || onlyPlaceId
     ? (message.sections ?? []).filter((section) => section.kind !== "overview")
-    : message.sections;
-  if (!isUser && ritual && hideOverview && message.sections?.length && !sections.length) {
+    : message.sections
+  )?.filter((section) => !onlyPlaceId || section.kind !== "place" || section.placeId === onlyPlaceId);
+  if (!isUser && onlyPlaceId && message.source === "fallback") {
+    return (
+      <div className="flex w-full min-w-0 flex-col gap-2.5">
+        <FallbackNotice text={copy.fallback} />
+        <FeedbackBar copy={copy} light={ritual} />
+      </div>
+    );
+  }
+  if (!isUser && ritual && hideOverview && !onlyPlaceId && message.sections?.length && !sections.length) {
     return null;
   }
   if (!isUser && ritual && sections?.length) {
-    return <RitualSections message={{ ...message, sections }} copy={copy} language={language} />;
+    return (
+      <RitualSections
+        message={{ ...message, sections }}
+        copy={copy}
+        language={language}
+        hideExtraPlaces={Boolean(onlyPlaceId)}
+        onlyPlaceId={onlyPlaceId}
+      />
+    );
   }
   const bubble = ritual
     ? "border border-white/35 bg-black/25 text-white"
@@ -48,7 +67,7 @@ export default function ChatMessage({ message, copy, language, ritual = false, h
           </div>
         )}
         {!isUser && message.source === "fallback" ? <FallbackNotice text={copy.fallback} /> : null}
-        {!isUser ? (
+        {!isUser && !onlyPlaceId ? (
           <PlaceList
             places={message.recommendedPlaces}
             bookingLabel={copy.booking}
@@ -56,12 +75,13 @@ export default function ChatMessage({ message, copy, language, ritual = false, h
             language={language}
           />
         ) : null}
+        {!isUser ? <FeedbackBar copy={copy} light={ritual} /> : null}
       </div>
     </article>
   );
 }
 
-function RitualSections({ message, copy, language }) {
+function RitualSections({ message, copy, language, hideExtraPlaces = false, onlyPlaceId = "" }) {
   const recommended = message.recommendedPlaces ?? [];
   const covered = new Set(
     message.sections.filter((section) => section.kind === "place" && section.placeId).map((section) => section.placeId),
@@ -125,12 +145,23 @@ function RitualSections({ message, copy, language }) {
                     ) : null}
                   </p>
                 ) : null}
+                {onlyPlaceId ? (
+                  <a
+                    href={goHref(booking?.booking_link || `/go/${section.placeId}`, language)}
+                    target="_blank"
+                    rel="sponsored nofollow noopener"
+                    className="mt-2 inline-flex items-center gap-2"
+                  >
+                    <span className="font-mono text-[10px] tracking-[0.12em] text-white/55 uppercase">{copy.ad}</span>
+                    <img src={bookingWordmark} alt="Booking.com" className="h-7 w-auto rounded-md" />
+                  </a>
+                ) : null}
               </div>
             </div>
             <div className="assistant-md mt-2 text-[14px] italic leading-relaxed text-white/80">
               <ReactMarkdown>{section.text}</ReactMarkdown>
             </div>
-            {booking ? (
+            {booking && !onlyPlaceId ? (
               <a
                 href={goHref(booking.booking_link, language)}
                 target="_blank"
@@ -145,7 +176,10 @@ function RitualSections({ message, copy, language }) {
         );
       })}
       {message.source === "fallback" ? <FallbackNotice text={copy.fallback} /> : null}
-      <PlaceList places={extraPlaces} bookingLabel={copy.booking} adLabel={copy.ad} language={language} />
+      {hideExtraPlaces ? null : (
+        <PlaceList places={extraPlaces} bookingLabel={copy.booking} adLabel={copy.ad} language={language} />
+      )}
+      <FeedbackBar copy={copy} light />
     </div>
   );
 }

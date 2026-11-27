@@ -7,9 +7,10 @@ vi.mock("./api", () => ({
   fetchStats: vi.fn(),
   loginAdmin: vi.fn(),
   logoutAdmin: vi.fn(),
+  switchChatModel: vi.fn(),
 }));
 
-import { fetchStats, loginAdmin } from "./api";
+import { fetchStats, loginAdmin, switchChatModel } from "./api";
 
 const STATS = {
   period: "2026-08-27/2026-09-25",
@@ -30,6 +31,8 @@ const STATS = {
     users: [],
     topics: [{ label: "Wochenende am Meer", count: 2 }],
   },
+  chat_model: "gpt-5-mini",
+  chat_model_reachable: true,
   llm_monitoring: {
     avg_latency_ms: 10,
     error_rate: 0,
@@ -48,6 +51,7 @@ describe("AdminApp", () => {
   beforeEach(() => {
     fetchStats.mockReset();
     loginAdmin.mockReset();
+    switchChatModel.mockReset();
   });
 
   it("shows login when the session is missing", async () => {
@@ -70,6 +74,15 @@ describe("AdminApp", () => {
     await user.type(view.getByLabelText("Passwort"), "secret");
     await user.click(view.getByRole("button", { name: "Anmelden" }));
     expect(await screen.findByRole("heading", { name: /Statistik/ })).toBeInTheDocument();
+    const active = screen.getByRole("button", { name: "gpt-5-mini" });
+    expect(active).toBeDisabled();
+    expect(active.querySelector("[title='erreichbar']")).toBeInTheDocument();
+    switchChatModel.mockResolvedValue({ model: "claude-haiku-5-5", reachable: false });
+    await user.click(screen.getByRole("button", { name: "Claude Haiku 5.5" }));
+    expect(switchChatModel).toHaveBeenCalledWith("claude-haiku-5-5");
+    const next = screen.getByRole("button", { name: "Claude Haiku 5.5" });
+    expect(next).toBeDisabled();
+    expect(next.querySelector("[title='nicht erreichbar']")).toBeInTheDocument();
     expect(screen.getByText("Formulare vs. Ergebnisse")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Grafiken" }));
     expect(screen.getByRole("img", { name: "Weltkarte" })).toHaveAttribute("src", STATS.charts.world);

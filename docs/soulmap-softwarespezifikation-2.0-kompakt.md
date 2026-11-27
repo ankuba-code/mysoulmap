@@ -1,5 +1,7 @@
 # Soulmap Softwarespezifikation 2.0 (kompakt)
 
+> **Vorgänger.** Die aktuelle Fassung ist [Spezifikation 3.0](soulmap-softwarespezifikation-3.0.md) (24.11.2026).
+
 **Datum:** 16.09.2026 · **Status:** Entwurf · **Update:** LLM OpenAI `gpt-5-mini`; Risikoanalyse KI-Funktionen integriert (Abschnitt 10)
 **Vollständige Version mit ausführlicher Begründung:** `soulmap-softwarespezifikation.md`
 

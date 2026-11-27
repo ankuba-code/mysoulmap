@@ -3,9 +3,9 @@ import asyncio
 from src.atlas import PLACES
 from src.chat import clip_message, handle_chat
 from src.fallback import fallback_place_ids, score_place, tokenize
-from src.llm import LlmCallError
+from src.llm import GROUP_OUTPUT_TOKENS, PLACE_OUTPUT_TOKENS, LlmCallError
 from src.models_chat import ChatRequest, LlmOutput, RitualContext
-from src.prompts import build_system_prompt
+from src.prompts import build_system_prompt, select_prompt_places
 
 
 def _request(
@@ -153,9 +153,112 @@ def test_ritual_prompt_splits_detail_and_more_places() -> None:
         ),
     )
     assert "empty place_ids list" in prompt
-    assert "at most 900 characters" in prompt
+    assert "one place_notes entry for every matched place" in prompt
+    assert "exactly one place_notes entry for that place" in prompt
+    assert "Do not describe the other matched places." in prompt
+    assert "3600 characters" in prompt
     assert "client prints the atlas name" in prompt
     assert "Island, Vulkane" in prompt
+    assert "Allowed place_ids" not in prompt
+    assert '"keywords"' not in prompt
+    assert '"correspondence"' not in prompt
+    assert '"element"' in prompt
+
+
+def _ritual(**overrides: object) -> RitualContext:
+    payload = {
+        "archetype_symbol": "triangle",
+        "element": "fire",
+        "inner_rhythm": "rise",
+        "emotional_intensity": 7,
+        "travel_direction": "outward",
+        "dominant_frequency": "Aufbruch",
+        "matched_place_ids": ["machu_picchu_pe"],
+        "lines": ["Feuer"],
+    }
+    payload.update(overrides)
+    return RitualContext.model_validate(payload)
+
+
+def test_place_catalog_keeps_only_the_requested_place() -> None:
+    request = ChatRequest(
+        messages=[{"role": "user", "content": "Vertiefe nur diesen Ort."}],
+        from_ritual=True,
+        prompt_catalog="place",
+        focus_place_id="machu_picchu_pe",
+        ritual_context=_ritual(),
+    )
+    chosen = select_prompt_places(PLACES, request)
+    assert [place.id for place in chosen] == ["machu_picchu_pe"]
+    prompt = build_system_prompt(
+        chosen,
+        language="de",
+        shown_place_ids=[],
+        ritual_context=request.ritual_context,
+        from_ritual=True,
+    )
+    assert "machu_picchu_pe" in prompt
+    assert "uluru_au" not in prompt
+
+
+def test_element_catalog_keeps_the_ritual_element_and_matches() -> None:
+    matched = next(place for place in PLACES if place.element != "fire")
+    left_out = next(place for place in PLACES if place.element != "fire" and place.id != matched.id)
+    request = ChatRequest(
+        messages=[{"role": "user", "content": "Schlage weitere Orte vor."}],
+        from_ritual=True,
+        prompt_catalog="element",
+        ritual_context=_ritual(matched_place_ids=[matched.id]),
+    )
+    chosen = select_prompt_places(PLACES, request)
+    ids = {place.id for place in chosen}
+    fire_ids = {place.id for place in PLACES if place.element == "fire"}
+    assert fire_ids <= ids
+    assert matched.id in ids
+    assert left_out.id not in ids
+    assert len(chosen) < len(PLACES)
+
+
+def test_one_place_turn_caps_output_tokens() -> None:
+    seen: dict[str, object] = {}
+
+    async def fake_llm(**kwargs: object) -> LlmOutput:
+        seen.update(kwargs)
+        return LlmOutput(
+            message="Früh auf den Berg.",
+            place_ids=[],
+            overview="",
+            place_notes=[{"place_id": "machu_picchu_pe", "text": "Früh auf den Berg."}],
+        )
+
+    request = ChatRequest(
+        messages=[{"role": "user", "content": "Vertiefe nur diesen Ort."}],
+        from_ritual=True,
+        prompt_catalog="place",
+        focus_place_id="machu_picchu_pe",
+        ritual_context=_ritual(element="earth"),
+    )
+    response = asyncio.run(handle_chat(request, PLACES, complete=fake_llm))
+    assert response.source == "llm"
+    assert seen["max_tokens"] == PLACE_OUTPUT_TOKENS
+    assert "uluru_au" not in str(seen["system_prompt"])
+
+
+def test_element_turn_keeps_room_for_several_notes() -> None:
+    seen: dict[str, object] = {}
+
+    async def fake_llm(**kwargs: object) -> LlmOutput:
+        seen.update(kwargs)
+        return LlmOutput(message="Zwei Orte.", place_ids=["mount_etna_it"])
+
+    request = ChatRequest(
+        messages=[{"role": "user", "content": "Schlage weitere Orte vor."}],
+        from_ritual=True,
+        prompt_catalog="element",
+        ritual_context=_ritual(),
+    )
+    asyncio.run(handle_chat(request, PLACES, complete=fake_llm))
+    assert seen["max_tokens"] == GROUP_OUTPUT_TOKENS
 
 
 def test_place_notes_take_headings_from_the_atlas() -> None:

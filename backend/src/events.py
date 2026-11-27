@@ -108,6 +108,15 @@ def log_affiliate_click(request: Request, place_id: str) -> None:
     )
 
 
+def log_feedback(request: Request, vote: str, text: str) -> None:
+    write_event(
+        event_type=EventType.chat_feedback,
+        feedback_vote=vote,
+        feedback_text=text[:500] or None,
+        **client_context(request),
+    )
+
+
 def log_rate_limited(request: Request) -> None:
     write_event(
         event_type=EventType.rate_limited,

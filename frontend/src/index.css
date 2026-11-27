@@ -324,3 +324,7 @@
   list-style: disc;
   padding-left: 1.2rem;
 }
+
+.leaflet-container {
+  z-index: 0;
+}

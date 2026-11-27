@@ -37,6 +37,8 @@ export default function ChatApp({
   seedPrompt = "",
   onSeedHandled = null,
   reading = false,
+  resultPlaces = [],
+  focusPlaceId = "",
 }) {
   const [state, setState] = useState(() => ({
     ...INITIAL_STATE,
@@ -79,7 +81,12 @@ export default function ChatApp({
     setPhase("chat");
     try {
       const response = await postChat(
-        buildRequest(state, content, language, { fromRitual, ritualContext }),
+        buildRequest(state, content, language, {
+          fromRitual,
+          ritualContext,
+          promptCatalog: focusPlaceId ? "place" : fromRitual ? "element" : "",
+          focusPlaceId,
+        }),
       );
       setState((current) => {
         const next = applyResponse(current, content, response);
@@ -132,6 +139,7 @@ export default function ChatApp({
         disclosure: state.aiDisclosure ? copy.tagline : "",
         card: cardFromRitual(loadRitual()),
         language,
+        places: resultPlaces,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : copy.exportError);
@@ -187,6 +195,7 @@ export default function ChatApp({
             language={language}
             ritual={embedded}
             hideOverview={hideOverview(state.messages, index)}
+            onlyPlaceId={focusPlaceId}
           />
           ),
         )}

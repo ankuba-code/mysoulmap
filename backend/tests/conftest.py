@@ -6,6 +6,7 @@ import pytest
 TEST_ADMIN_PASSWORD = "phase4-test-pass"
 
 os.environ["DATABASE_URL"] = "sqlite://"
+os.environ["SOULMAP_MODEL_PROBE"] = "off"
 os.environ["BOOKING_AFFILIATE_ID"] = "test-aid"
 os.environ["ADMIN_PASSWORD_HASH"] = bcrypt.hashpw(
     TEST_ADMIN_PASSWORD.encode("utf-8"),
@@ -14,6 +15,7 @@ os.environ["ADMIN_PASSWORD_HASH"] = bcrypt.hashpw(
 
 from src.db import init_db  # noqa: E402
 from src.models_events import UsageEvent  # noqa: E402, F401
+from src.models_settings import AppSetting  # noqa: E402, F401
 from src.budget import reset_budget  # noqa: E402
 from src.rate_limit import reset_rate_limits  # noqa: E402
 

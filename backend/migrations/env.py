@@ -5,6 +5,7 @@ from sqlalchemy import create_engine, pool
 
 from src.db import get_database_url
 from src.models_events import UsageEvent  # noqa: F401
+from src.models_settings import AppSetting  # noqa: F401
 from sqlmodel import SQLModel
 
 config = context.config

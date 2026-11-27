@@ -637,7 +637,7 @@ def _direction_pool(places: list[Place], direction: str) -> list[Place]:
         "east": lambda place: place.coordinates.lng,
         "west": lambda place: -place.coordinates.lng,
     }[direction]
-    return sorted(places, key=axis, reverse=True)[:3]
+    return sorted(places, key=axis, reverse=True)[:5]
 
 
 def _nearest(candidates: list[Place], origin: Coordinates, ranked: list[_Ranked]) -> Place:
@@ -703,7 +703,7 @@ def match_places(
     places: list[Place],
     request: MatchRequest,
     *,
-    limit: int = 3,
+    limit: int = 5,
     located: Coordinates | None = None,
 ) -> MatchResponse:
     card = derive_anima_card(request.answers)

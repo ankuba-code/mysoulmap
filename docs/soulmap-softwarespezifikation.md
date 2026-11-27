@@ -1,5 +1,7 @@
 # Softwarespezifikation — Soulmap
 
+> **Vorgänger.** Die aktuelle Fassung ist [Spezifikation 3.0](soulmap-softwarespezifikation-3.0.md) (24.11.2026).
+
 **Version:** 2.9 (LLM: OpenAI `gpt-5-mini` statt Anthropic)
 **Datum:** 16.09.2026
 **Status:** Entwurf

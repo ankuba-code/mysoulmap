@@ -229,6 +229,8 @@ def aggregate_stats(
                 "llm_status": event.llm_status.value if event.llm_status else None,
                 "error_code": event.error_code,
                 "user_prompt": event.user_prompt,
+                "feedback_vote": event.feedback_vote,
+                "feedback_text": event.feedback_text,
             }
             for event in sorted(events, key=lambda item: item.occurred_at)
         ]

@@ -22,6 +22,25 @@ export async function logoutAdmin() {
   await fetch("/api/admin/logout", { method: "POST", credentials: "include" });
 }
 
+export async function switchChatModel(model) {
+  const response = await fetch("/api/admin/model", {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ model }),
+  });
+  const data = await readJson(response);
+  if (response.status === 401) {
+    const error = new Error("UNAUTHORIZED");
+    error.code = "UNAUTHORIZED";
+    throw error;
+  }
+  if (!response.ok) {
+    throw new Error(data?.error?.message || "Das Chat-Modell konnte nicht gewechselt werden.");
+  }
+  return data;
+}
+
 export async function fetchStats(raw = false) {
   const response = await fetch(`/api/admin/stats${raw ? "?raw=true" : ""}`, {
     credentials: "include",

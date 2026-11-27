@@ -37,6 +37,27 @@ describe("buildRequest", () => {
       { role: "assistant", content: "Machu Picchu." },
       { role: "user", content: "Mehr Wasser" },
     ]);
+    expect(payload.prompt_catalog).toBeUndefined();
+  });
+
+  it("sends one place or the ritual element when the results page asks", () => {
+    const ritual = { element: "earth", matched_place_ids: ["mp"] };
+    const onePlace = buildRequest(INITIAL_STATE, "Vertiefe", "de", {
+      fromRitual: true,
+      ritualContext: ritual,
+      promptCatalog: "place",
+      focusPlaceId: "mp",
+    });
+    expect(onePlace.prompt_catalog).toBe("place");
+    expect(onePlace.focus_place_id).toBe("mp");
+    expect(onePlace.ritual_context).toBe(ritual);
+    const more = buildRequest(INITIAL_STATE, "Weitere", "de", {
+      fromRitual: true,
+      ritualContext: ritual,
+      promptCatalog: "element",
+    });
+    expect(more.prompt_catalog).toBe("element");
+    expect(more.focus_place_id).toBeUndefined();
   });
 });
 

@@ -28,6 +28,12 @@ export function buildRequest(state, userContent, language, extras = {}) {
   if (extras.ritualContext) {
     payload.ritual_context = extras.ritualContext;
   }
+  if (extras.promptCatalog) {
+    payload.prompt_catalog = extras.promptCatalog;
+  }
+  if (extras.focusPlaceId) {
+    payload.focus_place_id = extras.focusPlaceId;
+  }
   return payload;
 }
 

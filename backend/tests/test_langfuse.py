@@ -5,8 +5,8 @@ from urllib.parse import parse_qs, urlparse
 
 from src.admin_pages import stats_page
 from src.langfuse_metrics import fetch_langfuse_widgets, reset_langfuse_cache
-from src.llm import PROMPT_CACHE_KEY, _client, complete_llm, langfuse_enabled, langfuse_project_url
-from src.models_chat import ChatMessage, LlmOutput
+from src.llm import _client, complete_llm, langfuse_enabled, langfuse_project_url
+from src.models_chat import ChatMessage
 
 
 def test_admin_links_the_configured_langfuse_project(monkeypatch) -> None:
@@ -33,7 +33,7 @@ def test_langfuse_client_is_used_when_keys_are_set(monkeypatch) -> None:
     seen: dict[str, object] = {}
 
     class _Message:
-        parsed = LlmOutput(message="Uluru.", place_ids=["uluru_au"])
+        content = '{"message":"Uluru.","place_ids":["uluru_au"],"overview":"","place_notes":[]}'
 
     class _Choice:
         message = _Message()
@@ -43,7 +43,7 @@ def test_langfuse_client_is_used_when_keys_are_set(monkeypatch) -> None:
         usage = None
 
     class _Completions:
-        async def parse(self, **kwargs: object) -> _Completion:
+        async def create(self, **kwargs: object) -> _Completion:
             seen.update(kwargs)
             return _Completion()
 
@@ -51,15 +51,11 @@ def test_langfuse_client_is_used_when_keys_are_set(monkeypatch) -> None:
         def __init__(self) -> None:
             self.completions = _Completions()
 
-    class _Beta:
-        def __init__(self) -> None:
-            self.chat = _Chat()
-
     class _Client:
         def __init__(self, **_kwargs: object) -> None:
-            self.beta = _Beta()
+            self.chat = _Chat()
 
-    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
     monkeypatch.setenv("LANGFUSE_PUBLIC_KEY", "pk-test")
     monkeypatch.setenv("LANGFUSE_SECRET_KEY", "sk-test")
     monkeypatch.setattr("langfuse.openai.AsyncOpenAI", _Client)
@@ -75,7 +71,7 @@ def test_langfuse_client_is_used_when_keys_are_set(monkeypatch) -> None:
     )
     assert result.place_ids == ["uluru_au"]
     assert seen["name"] == "soulmap-chat"
-    assert seen["metadata"] == {"prompt_cache_key": PROMPT_CACHE_KEY}
+    assert seen["metadata"] == {"model": "openai/gpt-5-mini"}
 
 
 class _Body:

@@ -70,9 +70,9 @@ def _ids(**overrides: object) -> list[str]:
     return [place.id for place in response.matches]
 
 
-def test_match_returns_three_atlas_places() -> None:
+def test_match_returns_five_atlas_places() -> None:
     response = match_places(PLACES, MatchRequest(answers=MatchAnswers.model_validate(ANSWERS)))
-    assert len(response.matches) == 3
+    assert len(response.matches) == 5
     known = {place.id for place in PLACES}
     assert {place.id for place in response.matches}.issubset(known)
     scores = [place.score for place in response.matches]
@@ -85,7 +85,7 @@ def test_match_endpoint_records_form_and_result() -> None:
     assert response.status_code == 200
     body = response.json()
     assert body["anima_card"]["element"] == "earth"
-    assert len(body["matches"]) == 3
+    assert len(body["matches"]) == 5
     assert body["matches"][0]["booking_link"].startswith("/go/")
     assert body["matches"][0]["booking_url"].startswith("https://www.booking.com/")
     assert "aid=test-aid" in body["matches"][0]["booking_url"]
@@ -169,13 +169,13 @@ def test_unknown_place_uses_geocoded_neighbour() -> None:
     assert q7_lookup_query("Licht", PLACES) is None
 
 
-def test_cardinal_direction_fills_all_three_matches() -> None:
+def test_cardinal_direction_fills_the_matches() -> None:
     north = match_places(PLACES, MatchRequest(answers=_answers(q7="im hohen Norden")))
     south = match_places(PLACES, MatchRequest(answers=_answers(q7="Süden")))
     east = match_places(PLACES, MatchRequest(answers=_answers(q7="Osten")))
     west = match_places(PLACES, MatchRequest(answers=_answers(q7="Westen")))
     assert q7_lookup_query("Norden", PLACES) is None
-    assert len(north.matches) == 3
+    assert len(north.matches) == 5
     assert all(place.coordinates.lat >= 50 for place in north.matches)
     assert all(place.reasons[0].dimension == "direction" for place in north.matches)
     assert all(place.coordinates.lat <= -10 for place in south.matches)
@@ -201,8 +201,8 @@ def test_match_geocodes_only_when_the_atlas_cannot_place_the_text(monkeypatch) -
     assert all(place["coordinates"]["lat"] >= 50 for place in north.json()["matches"])
 
 
-def test_match_keeps_three_places_when_geocoding_fails(monkeypatch) -> None:
+def test_match_keeps_five_places_when_geocoding_fails(monkeypatch) -> None:
     monkeypatch.setattr("src.main.locate_text", lambda *_args, **_kwargs: None)
     response = client.post("/match", json={"answers": _answers(q7="Paris").model_dump(), "language": "de"})
     assert response.status_code == 200
-    assert len(response.json()["matches"]) == 3
+    assert len(response.json()["matches"]) == 5
